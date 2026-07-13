@@ -3,6 +3,9 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   DEFAULT_PORTFOLIO_CONTENT,
+  LEGACY_PORTFOLIO_DRAFT_STORAGE_KEY,
+  PORTFOLIO_DRAFT_STORAGE_KEY,
+  applyGeneralProfile,
   sanitizePortfolioContent,
   type PortfolioContent,
   type PortfolioProject,
@@ -18,7 +21,6 @@ type GitHubPublishSettings = {
   filePath: string;
 };
 
-const draftStorageKey = "kim-seojun-portfolio-draft-v2-hd-design";
 const publishSettingsKey = "kim-seojun-portfolio-github-settings-v2";
 const defaultPublishSettings: GitHubPublishSettings = {
   repository: process.env.NEXT_PUBLIC_GITHUB_REPO || "tjwnsdhfz/tjwnsdhfz.github.io",
@@ -28,7 +30,7 @@ const defaultPublishSettings: GitHubPublishSettings = {
 
 const tabs: { id: EditorTab; label: string }[] = [
   { id: "basic", label: "기본·Hero" },
-  { id: "fit", label: "직무 적합성" },
+  { id: "fit", label: "핵심 역량" },
   { id: "github", label: "GitHub" },
   { id: "projects", label: "프로젝트" },
   { id: "career", label: "경력·수상" },
@@ -298,7 +300,7 @@ export default function ContentEditor({
     const timer = window.setTimeout(() => {
       try {
         const sanitized = sanitizePortfolioContent(content);
-        window.localStorage.setItem(draftStorageKey, JSON.stringify(sanitized));
+        window.localStorage.setItem(PORTFOLIO_DRAFT_STORAGE_KEY, JSON.stringify(sanitized));
         onSavedRef.current(sanitized);
         setSaveState({ kind: "idle", message: "" });
         const savedAt = new Intl.DateTimeFormat("ko-KR", {
@@ -370,7 +372,7 @@ export default function ContentEditor({
     setSaveState({ kind: "saving", message: "이 기기에 저장 중…" });
     try {
       const sanitized = sanitizePortfolioContent(content);
-      window.localStorage.setItem(draftStorageKey, JSON.stringify(sanitized));
+      window.localStorage.setItem(PORTFOLIO_DRAFT_STORAGE_KEY, JSON.stringify(sanitized));
       onSavedRef.current(sanitized);
       setAutoSaveMessage("브라우저 초안 저장됨 · GitHub에는 자동 게시되지 않습니다.");
       setSaveState({ kind: "success", message: "이 브라우저에 초안을 저장했습니다." });
@@ -433,7 +435,7 @@ export default function ContentEditor({
         throw new Error(publishError.message || "GitHub에 게시하지 못했습니다.");
       }
 
-      window.localStorage.setItem(draftStorageKey, JSON.stringify(sanitized));
+      window.localStorage.setItem(PORTFOLIO_DRAFT_STORAGE_KEY, JSON.stringify(sanitized));
       onSavedRef.current(sanitized);
       setAutoSaveMessage("브라우저 초안과 GitHub 콘텐츠가 일치합니다.");
       setSaveState({
@@ -453,9 +455,44 @@ export default function ContentEditor({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "kim-seojun-portfolio-content.json";
+    const roleSlug = content.identity.role
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 36) || "general";
+    const date = new Date().toISOString().slice(0, 10);
+    anchor.download = `kim-seojun-portfolio-${roleSlug}-${date}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
+  };
+
+  const applyGeneralProfilePreset = () => {
+    const confirmed = window.confirm(
+      "프로젝트·경력·연락처는 유지하고 소개·핵심 역량 문구만 범용형으로 바꿀까요? 브라우저 초안에 먼저 적용되며 GitHub 공개본은 게시 전까지 바뀌지 않습니다.",
+    );
+    if (!confirmed) return;
+    onChange(applyGeneralProfile(content));
+    setSaveState({
+      kind: "idle",
+      message: "범용 자기소개를 브라우저 초안에 적용했습니다. GitHub 공개본은 아직 바뀌지 않았습니다.",
+    });
+  };
+
+  const loadLegacyDraft = () => {
+    try {
+      const legacyDraft = window.localStorage.getItem(LEGACY_PORTFOLIO_DRAFT_STORAGE_KEY);
+      if (!legacyDraft) {
+        setSaveState({ kind: "idle", message: "이 브라우저에 이전 직무 맞춤 초안이 없습니다." });
+        return;
+      }
+      onChange(sanitizePortfolioContent(JSON.parse(legacyDraft)));
+      setSaveState({
+        kind: "idle",
+        message: "이전 직무 맞춤 초안을 불러왔습니다. GitHub 공개본은 게시 전까지 바뀌지 않습니다.",
+      });
+    } catch {
+      setSaveState({ kind: "error", message: "이전 직무 맞춤 초안을 불러오지 못했습니다." });
+    }
   };
 
   const importJson = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -464,7 +501,10 @@ export default function ContentEditor({
     try {
       const imported = sanitizePortfolioContent(JSON.parse(await file.text()));
       onChange(imported);
-      setSaveState({ kind: "idle", message: "JSON을 불러왔습니다. 저장하면 사이트에 반영됩니다." });
+      setSaveState({
+        kind: "idle",
+        message: "JSON을 브라우저 초안으로 불러왔습니다. GitHub 게시 전까지 공개 사이트는 바뀌지 않습니다.",
+      });
     } catch {
       setSaveState({ kind: "error", message: "올바른 포트폴리오 JSON 파일이 아닙니다." });
     } finally {
@@ -488,9 +528,10 @@ export default function ContentEditor({
         </header>
 
         <div className="editor-toolbar">
-          <button type="button" onClick={exportJson}>JSON 내보내기</button>
-          <button type="button" onClick={() => importInputRef.current?.click()}>JSON 불러오기</button>
+          <button type="button" onClick={exportJson}>현재 버전 JSON 내보내기</button>
+          <button type="button" onClick={() => importInputRef.current?.click()}>JSON 버전 불러오기</button>
           <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json" onChange={importJson} />
+          <button type="button" onClick={loadLegacyDraft}>이전 직무 초안 불러오기</button>
           <button
             type="button"
             onClick={() => {
@@ -498,7 +539,7 @@ export default function ContentEditor({
                 onChange(structuredClone(DEFAULT_PORTFOLIO_CONTENT));
               }
             }}
-          >기본값 복원</button>
+          >전체 기본값 복원</button>
         </div>
 
         <label className="editor-tab-select">
@@ -525,6 +566,28 @@ export default function ContentEditor({
         <div className="editor-body" ref={editorBodyRef}>
           {tab === "basic" ? (
             <>
+              <FormSection
+                title="지원 방향 빠른 전환"
+                description="지원처가 바뀌어도 프로젝트와 경력 근거는 그대로 두고 소개 문구만 빠르게 정리할 수 있습니다."
+              >
+                <div className="profile-preset-card">
+                  <div>
+                    <strong>범용 자기소개</strong>
+                    <p>회사명 없이 설계·데이터·디지털 프로젝트 경험을 함께 보여주는 기본안입니다.</p>
+                    <ol>
+                      <li>범용 소개를 적용한 뒤 포지셔닝 한 줄을 확인합니다.</li>
+                      <li>핵심 역량의 업무 적용 문구만 지원처에 맞게 조정합니다.</li>
+                      <li>프로젝트 탭에서 노출 순서를 바꾸고 JSON으로 버전을 보관합니다.</li>
+                    </ol>
+                  </div>
+                  <div className="profile-preset-actions">
+                    <button type="button" onClick={applyGeneralProfilePreset}>범용 자기소개 적용</button>
+                    <button type="button" onClick={() => selectTab("fit")}>핵심 역량 수정</button>
+                    <button type="button" onClick={() => selectTab("projects")}>프로젝트 노출 수정</button>
+                  </div>
+                </div>
+              </FormSection>
+
               <FormSection title="기본 정보" description="상단 내비게이션과 연락처에 사용됩니다.">
                 <div className="field-grid">
                   <Field label="이름" value={content.identity.name} onChange={(value) => updateIdentity("name", value)} />
@@ -533,7 +596,7 @@ export default function ContentEditor({
                   <Field label="현재 상태" value={content.identity.status} onChange={(value) => updateIdentity("status", value)} />
                   <Field label="GitHub 핸들" value={content.identity.githubHandle} onChange={(value) => updateIdentity("githubHandle", value)} />
                 </div>
-                <Field label="직무 포지셔닝" value={content.identity.role} onChange={(value) => updateIdentity("role", value)} />
+                <Field label="포트폴리오 포지셔닝" value={content.identity.role} onChange={(value) => updateIdentity("role", value)} />
               </FormSection>
 
               <FormSection title="Hero" description="방문자가 처음 보는 핵심 문장과 이미지입니다.">
@@ -624,12 +687,12 @@ export default function ContentEditor({
 
           {tab === "fit" ? (
             <>
-              <FormSection title="직무 적합성 섹션" description="회사·직무가 바뀌면 이 제목과 설명부터 교체하세요.">
+              <FormSection title="핵심 역량 섹션" description="지원 방향이 바뀌면 제목보다 업무 적용 문구를 먼저 조정하세요.">
                 <Field label="작은 제목" value={content.roleFitIntro.eyebrow} onChange={(value) => onChange({ ...content, roleFitIntro: { ...content.roleFitIntro, eyebrow: value } })} />
                 <Field label="제목" value={content.roleFitIntro.title} onChange={(value) => onChange({ ...content, roleFitIntro: { ...content.roleFitIntro, title: value } })} />
                 <Textarea label="설명" value={content.roleFitIntro.description} onChange={(value) => onChange({ ...content, roleFitIntro: { ...content.roleFitIntro, description: value } })} />
               </FormSection>
-              <FormSection title="직무-근거 매핑" description="직무 요구, 실제 근거, 전이 가능한 이유를 한 카드에 묶습니다.">
+              <FormSection title="역량-근거 매핑" description="반복해 온 방식, 실제 근거, 업무 적용 방식을 한 행에 묶습니다.">
                 {content.roleFit.map((item, index) => (
                   <div className="repeater" key={`role-fit-${index}`}>
                     <div className="field-grid">
@@ -637,7 +700,7 @@ export default function ContentEditor({
                       <Field label="업무 신호" value={item.title} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, title: value } : entry) })} />
                     </div>
                     <Textarea label="확인 가능한 근거" value={item.evidence} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, evidence: value } : entry) })} />
-                    <Textarea label="지원 직무 연결" value={item.application} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, application: value } : entry) })} />
+                    <Textarea label="업무 적용 방식" value={item.application} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, application: value } : entry) })} />
                     <ItemActions
                       index={index}
                       count={content.roleFit.length}
@@ -646,7 +709,7 @@ export default function ContentEditor({
                     />
                   </div>
                 ))}
-                <button className="add-button" type="button" onClick={() => onChange({ ...content, roleFit: [...content.roleFit, { label: "0X · ROLE FIT", title: "새 업무 신호", evidence: "확인 가능한 경험과 산출물", application: "지원 직무와 연결되는 이유" }] })}>+ 직무 근거 추가</button>
+                <button className="add-button" type="button" onClick={() => onChange({ ...content, roleFit: [...content.roleFit, { label: "0X · CAPABILITY", title: "새 핵심 역량", evidence: "확인 가능한 경험과 산출물", application: "실제 업무에서 적용하는 방식" }] })}>+ 역량 근거 추가</button>
               </FormSection>
               <FormSection title="과장 방지 경계" description="아직 경험하지 않은 실무·도구·인증을 명확히 분리합니다.">
                 <Textarea label="경계 문구" value={content.roleBoundary} rows={5} onChange={(value) => onChange({ ...content, roleBoundary: value })} />
@@ -716,7 +779,7 @@ export default function ContentEditor({
 
           {tab === "projects" ? (
             <>
-              <FormSection title="프로젝트 섹션 제목" description="지원 회사·직무가 바뀌면 대표 작업을 소개하는 문구도 함께 바꾸세요.">
+              <FormSection title="프로젝트 섹션 제목" description="지원 방향에 맞춰 대표 작업 소개와 노출 순서를 함께 조정하세요.">
                 <Field label="대표 작업 작은 제목" value={content.projectIntro.eyebrow} onChange={(value) => onChange({ ...content, projectIntro: { ...content.projectIntro, eyebrow: value } })} />
                 <Field label="대표 작업 제목" value={content.projectIntro.title} onChange={(value) => onChange({ ...content, projectIntro: { ...content.projectIntro, title: value } })} />
                 <Textarea label="대표 작업 설명" value={content.projectIntro.description} onChange={(value) => onChange({ ...content, projectIntro: { ...content.projectIntro, description: value } })} />
@@ -942,7 +1005,7 @@ export default function ContentEditor({
                 : saveState.message || autoSaveMessage}
           </p>
           <button className="save-button" type="button" onClick={saveLocalDraft} disabled={!dirty || saveState.kind === "saving"}>
-            {saveState.kind === "saving" ? "저장 중…" : "지금 저장"}
+            {saveState.kind === "saving" ? "저장 중…" : "브라우저 초안 저장"}
           </button>
         </footer>
       </aside>

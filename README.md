@@ -1,20 +1,20 @@
-# Kim Seojun · Shipbuilding Detailed Design Portfolio
+# Kim Seojun · Engineering, Design & Digital Portfolio
 
-HD현대중공업 조선 상세설계 지원을 위해 도면·공간 검토, CAD 설계 데이터 검증, 변경관리와 현장 경험을 연결한 김서준의 포트폴리오입니다. 선박 실무 경험을 과장하지 않고 공개 코드, 검토 기록과 명시한 한계로 전이 가능한 역량을 보여줍니다.
+건축 설계와 현장 운영, CAD·데이터 검증, 디지털 프로젝트에서 문제를 정의하고 결과를 검증해 온 김서준의 포트폴리오입니다. 수행 범위와 한계를 구분하고 공개 코드와 검토 기록으로 근거를 보여줍니다.
 
 ## Content
 
-- HD현대중공업 상세설계 업무와 실제 근거를 연결한 30초 적합성 표
+- 설계·데이터·협업 역량과 실제 근거를 연결한 30초 요약
 - 공개 `DatumGuard v0.3.0`의 독립 CAD 재검증·revision·승인 gate
 - 현장 실측 기반 100개 이상 평면 설계와 공병 안전·협업 경험
 - G4 감사 실패를 숨기지 않고 보강 중인 `BARAM 2026` 검증 절차
 - 건축 설계의 구획·동선·반복 유닛 검토와 명확한 경험 경계
 
-콘텐츠 근거와 편집 원칙은 [`docs/portfolio-strategy.md`](docs/portfolio-strategy.md)에 정리되어 있습니다.
+지원처별 편집 순서와 저장 방식은 [`docs/CONTENT_EDITING.md`](docs/CONTENT_EDITING.md)에 정리되어 있습니다.
 
 ## 사이트에서 직접 편집
 
-공개 주소 `https://tjwnsdhfz.github.io/edit/`에서 포트폴리오 내용을 수정할 수 있습니다. 브라우저 초안 저장과 JSON 백업을 지원하며, `tjwnsdhfz/tjwnsdhfz.github.io` 저장소에만 쓰기 권한이 있는 fine-grained token을 현재 세션에서 입력해 콘텐츠를 게시할 수 있습니다. 토큰은 저장되지 않습니다.
+공개 주소 `https://tjwnsdhfz.github.io/edit/`에서 포트폴리오 내용을 수정할 수 있습니다. `범용 자기소개 적용`으로 소개·핵심 역량 문구만 초기화하면서 프로젝트와 경력 근거는 유지할 수 있습니다. 브라우저 초안 저장과 지원처별 JSON 백업을 지원하며, `tjwnsdhfz/tjwnsdhfz.github.io` 저장소에만 쓰기 권한이 있는 fine-grained token을 현재 세션에서 입력해 콘텐츠를 게시할 수 있습니다. 토큰은 저장되지 않습니다.
 
 자세한 설정은 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)를 참고하세요.
 

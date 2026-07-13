@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const title = "김서준 | HD현대중공업 조선 상세설계 포트폴리오";
+const title = "김서준 | 설계·데이터·디지털 프로젝트 포트폴리오";
 const description =
-  "도면·모델 검토, CAD 설계 데이터 검증과 변경관리 근거를 담은 김서준의 HD현대중공업 조선 상세설계 지원 포트폴리오입니다.";
+  "건축 설계와 현장 운영, CAD·데이터 검증, 디지털 프로젝트에서 문제를 정의하고 결과를 검증해 온 김서준의 포트폴리오입니다.";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
@@ -15,12 +15,11 @@ export const metadata: Metadata = {
     alternates: { canonical: "/" },
     keywords: [
       "김서준",
-      "HD현대중공업",
-      "조선 상세설계",
-      "도면 설계",
-      "도면 검토",
-      "설계 변경관리",
-      "CAD Data Assurance",
+      "취업 포트폴리오",
+      "설계",
+      "데이터 검증",
+      "디지털 프로젝트",
+      "CAD",
       "BIM",
       "DXF",
       "IFC",
@@ -44,7 +43,7 @@ export const metadata: Metadata = {
           url: `${basePath}/og-apple.png`,
           width: 1728,
           height: 909,
-          alt: "김서준 HD현대중공업 조선 상세설계 지원 포트폴리오",
+          alt: "김서준 설계·데이터·디지털 프로젝트 포트폴리오",
         },
       ],
     },

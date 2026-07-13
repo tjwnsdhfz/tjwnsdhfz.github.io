@@ -13,9 +13,9 @@ test("build contains the Apple-editorial GitHub portfolio", async () => {
 
   await access(new URL("../out/index.html", import.meta.url));
   assert.match(layout, /<html lang="ko">/i);
-  assert.match(layout, /김서준 \| HD현대중공업 조선 상세설계 포트폴리오/i);
-  assert.match(defaults, /요구조건과 도면 변경을/);
-  assert.match(defaults, /생산 가능한 정보로 연결합니다/);
+  assert.match(layout, /김서준 \| 설계·데이터·디지털 프로젝트 포트폴리오/i);
+  assert.match(defaults, /복잡한 요구를/);
+  assert.match(defaults, /확인 가능한 결과로 바꿉니다/);
   assert.match(defaults, /3\.86 \/ 4\.5/);
   assert.match(defaults, /OPIc IH/);
   assert.match(defaults, /DatumGuard/);
@@ -44,15 +44,19 @@ test("build contains the Apple-editorial GitHub portfolio", async () => {
   assert.match(site, /compact-details/);
   assert.match(site, /section-edit-trigger/);
   assert.match(site, /initialTab/);
+  assert.match(site, /핵심 역량/);
+  assert.match(site, /업무 적용 방식/);
+  assert.doesNotMatch(`${defaults}${site}${layout}`, /HD현대중공업|조선 상세설계|상세설계 연결/i);
   assert.doesNotMatch(`${defaults}${site}`, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
 test("keeps repository editing, GitHub Pages publishing, and Apple design constraints wired", async () => {
-  const [page, editPage, site, editor, layout, css, packageJson, nextConfig, workflow, contentJson, deploymentGuide] = await Promise.all([
+  const [page, editPage, site, editor, defaults, layout, css, packageJson, nextConfig, workflow, contentJson, deploymentGuide] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/edit/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/portfolio-site.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/content-editor.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/portfolio-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -87,13 +91,13 @@ test("keeps repository editing, GitHub Pages publishing, and Apple design constr
   assert.match(site, /localStorage/);
   assert.match(site, /loading="lazy"/);
   assert.match(editor, /JSON 내보내기/);
-  assert.match(editor, /지금 저장/);
+  assert.match(editor, /브라우저 초안 저장/);
   assert.match(editor, /GitHub에 게시/);
   assert.match(editor, /api\.github\.com/);
   assert.match(editor, /Contents: Read and write/);
   assert.match(editor, /Pinned repositories/);
   assert.match(editor, /채용 핵심 정보/);
-  assert.match(editor, /직무-근거 매핑/);
+  assert.match(editor, /역량-근거 매핑/);
   assert.match(editor, /과장 방지 경계/);
   assert.match(editor, /브라우저 초안 자동 저장/);
   assert.match(editor, /previouslyFocusedRef/);
@@ -101,6 +105,13 @@ test("keeps repository editing, GitHub Pages publishing, and Apple design constr
   assert.match(editor, /prefers-reduced-motion: reduce/);
   assert.match(editor, /defaultOpen=\{index === 0\}/);
   assert.match(editor, /복제/);
+  assert.match(editor, /범용 자기소개 적용/);
+  assert.match(editor, /applyGeneralProfile/);
+  assert.match(editor, /이전 직무 초안 불러오기/);
+  assert.match(editor, /GitHub 공개본은 게시 전까지 바뀌지 않습니다/);
+  assert.match(site, /PORTFOLIO_DRAFT_STORAGE_KEY/);
+  assert.match(editor, /PORTFOLIO_DRAFT_STORAGE_KEY/);
+  assert.match(defaults, /kim-seojun-portfolio-draft-v3-general/);
   assert.doesNotMatch(editor, /open=\{index === 0\}/);
   assert.match(editor, /저장소 추가/);
   assert.match(editor, /프로젝트 추가/);

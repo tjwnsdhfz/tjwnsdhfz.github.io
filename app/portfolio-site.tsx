@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  PORTFOLIO_DRAFT_STORAGE_KEY,
   sanitizePortfolioContent,
   type PortfolioContent,
   type PortfolioProject,
@@ -10,9 +11,8 @@ import {
 import ContentEditor, { type EditorTab } from "./content-editor";
 
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
-const draftStorageKey = "kim-seojun-portfolio-draft-v2-hd-design";
 const primaryNavigation = [
-  { id: "role-fit", label: "직무 적합성" },
+  { id: "role-fit", label: "핵심 역량" },
   { id: "selected-work", label: "대표 작업" },
   { id: "experience", label: "경험" },
   { id: "repositories", label: "검증 근거" },
@@ -156,10 +156,10 @@ export default function PortfolioSite({
 
       if (canEdit) {
         try {
-          const draft = window.localStorage.getItem(draftStorageKey);
+          const draft = window.localStorage.getItem(PORTFOLIO_DRAFT_STORAGE_KEY);
           if (draft) nextContent = sanitizePortfolioContent(JSON.parse(draft));
         } catch {
-          window.localStorage.removeItem(draftStorageKey);
+          window.localStorage.removeItem(PORTFOLIO_DRAFT_STORAGE_KEY);
         }
       }
 
@@ -363,7 +363,7 @@ export default function PortfolioSite({
             <div>
               <p className="eyebrow">{content.roleFitIntro.eyebrow}</p>
               <h2 id="role-fit-title">{content.roleFitIntro.title}</h2>
-              {canEdit ? <SectionEditButton label="직무 적합성 편집" onClick={() => openEditor("fit")} /> : null}
+              {canEdit ? <SectionEditButton label="핵심 역량 편집" onClick={() => openEditor("fit")} /> : null}
             </div>
             <p>{content.roleFitIntro.description}</p>
           </div>
@@ -379,7 +379,7 @@ export default function PortfolioSite({
                   <p>{item.evidence}</p>
                 </div>
                 <div className="role-fit-application">
-                  <span>상세설계 연결</span>
+                  <span>업무 적용 방식</span>
                   <p>{item.application}</p>
                 </div>
               </article>

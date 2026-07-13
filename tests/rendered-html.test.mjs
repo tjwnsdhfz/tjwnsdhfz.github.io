@@ -5,15 +5,17 @@ import test from "node:test";
 const templateRoot = new URL("../", import.meta.url);
 
 test("build contains the Apple-editorial GitHub portfolio", async () => {
-  const [defaults, site, layout] = await Promise.all([
+  const [defaults, site, layout, renderedHome] = await Promise.all([
     readFile(new URL("../lib/portfolio-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/portfolio-site.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../out/index.html", import.meta.url), "utf8"),
   ]);
 
-  await access(new URL("../out/index.html", import.meta.url));
   assert.match(layout, /<html lang="ko">/i);
-  assert.match(layout, /김서준 \| 설계·데이터·디지털 프로젝트 포트폴리오/i);
+  assert.match(renderedHome, /김서준 \| 설계·데이터·디지털 프로젝트 포트폴리오/i);
+  assert.match(renderedHome, /대표 작업 보기/);
+  assert.match(renderedHome, /application\/ld\+json/);
   assert.match(defaults, /복잡한 요구를/);
   assert.match(defaults, /확인 가능한 결과로 바꿉니다/);
   assert.match(defaults, /3\.86 \/ 4\.5/);
@@ -39,6 +41,9 @@ test("build contains the Apple-editorial GitHub portfolio", async () => {
   assert.match(site, /지원자 핵심 정보/);
   assert.match(site, /role-fit-section/);
   assert.match(site, /role-fit-capability/);
+  assert.match(site, /role-fit-proof-link/);
+  assert.match(site, /beforeunload/);
+  assert.match(site, /mobileNavigationRef/);
   assert.match(site, /is-proof/);
   assert.match(site, /repository-grid shell.*is-single/);
   assert.match(site, /compact-details/);
@@ -71,21 +76,33 @@ test("keeps repository editing, GitHub Pages publishing, and Apple design constr
   await assert.rejects(access(new URL("../db/index.ts", templateRoot)));
   await assert.rejects(access(new URL("../.openai/hosting.json", templateRoot)));
   await access(new URL("public/og-apple.png", templateRoot));
+  await access(new URL("public/og-apple.jpg", templateRoot));
   await access(new URL("public/projects/baram-validation.svg", templateRoot));
   await access(new URL("public/portfolio-content.json", templateRoot));
   await access(new URL("docs/DEPLOYMENT.md", templateRoot));
+  await access(new URL("out/robots.txt", templateRoot));
+  await access(new URL("out/sitemap.xml", templateRoot));
+  const [robotsText, sitemapText] = await Promise.all([
+    readFile(new URL("out/robots.txt", templateRoot), "utf8"),
+    readFile(new URL("out/sitemap.xml", templateRoot), "utf8"),
+  ]);
+  assert.match(robotsText, /Disallow: \/edit\//);
+  assert.match(robotsText, /https:\/\/tjwnsdhfz\.github\.io\/sitemap\.xml/);
+  assert.match(sitemapText, /https:\/\/tjwnsdhfz\.github\.io\//);
 
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.doesNotMatch(packageJson, /drizzle/);
   assert.match(packageJson, /build:portable/);
   assert.match(packageJson, /content:sync/);
-  assert.match(layout, /\/og-apple\.png/);
+  assert.match(layout, /\/og-apple\.jpg/);
   assert.match(layout, /<html lang="ko">/);
+  assert.match(page, /PUBLISHED_PORTFOLIO_CONTENT/);
+  assert.match(editPage, /PUBLISHED_PORTFOLIO_CONTENT/);
   assert.doesNotMatch(page, /headers|force-dynamic|readPortfolioContent/);
   assert.match(editPage, /initialEditorOpen/);
   assert.match(editPage, /robots/);
   assert.match(site, /ContentEditor/);
-  assert.match(site, /portfolio-content\.json/);
+  assert.doesNotMatch(site, /portfolio-content\.json/);
   assert.match(site, /RepositoryCard/);
   assert.match(site, /repository-section/);
   assert.match(site, /localStorage/);
@@ -106,12 +123,16 @@ test("keeps repository editing, GitHub Pages publishing, and Apple design constr
   assert.match(editor, /defaultOpen=\{index === 0\}/);
   assert.match(editor, /복제/);
   assert.match(editor, /범용 자기소개 적용/);
+  assert.match(editor, /BROWSER DRAFT/);
+  assert.match(editor, /현재 공개본 다시 불러오기/);
+  assert.match(editor, /GitHub 공개본과 연결된 배포를 변경합니다/);
   assert.match(editor, /applyGeneralProfile/);
   assert.match(editor, /이전 직무 초안 불러오기/);
   assert.match(editor, /GitHub 공개본은 게시 전까지 바뀌지 않습니다/);
   assert.match(site, /PORTFOLIO_DRAFT_STORAGE_KEY/);
   assert.match(editor, /PORTFOLIO_DRAFT_STORAGE_KEY/);
   assert.match(defaults, /kim-seojun-portfolio-draft-v3-general/);
+  assert.match(defaults, /evidenceHref/);
   assert.doesNotMatch(editor, /open=\{index === 0\}/);
   assert.match(editor, /저장소 추가/);
   assert.match(editor, /프로젝트 추가/);
@@ -120,7 +141,7 @@ test("keeps repository editing, GitHub Pages publishing, and Apple design constr
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /actions\/upload-pages-artifact@v4/);
   assert.match(workflow, /NEXT_PUBLIC_GITHUB_REPO/);
-  assert.equal(JSON.parse(contentJson).repositories.length, 3);
+  assert.equal(JSON.parse(contentJson).repositories.length, 1);
   assert.equal(JSON.parse(contentJson).roleFit.length, 4);
   assert.equal(JSON.parse(contentJson).projects.find((project) => project.id === "baram-2026").visible, true);
   assert.match(deploymentGuide, /tjwnsdhfz\.github\.io/);
@@ -137,6 +158,7 @@ test("keeps repository editing, GitHub Pages publishing, and Apple design constr
   assert.match(css, /\.details-count-5/);
   assert.match(css, /\.role-fit-grid/);
   assert.match(css, /\.role-fit-capability/);
+  assert.match(css, /\.role-fit-proof-link/);
   assert.match(css, /\.role-boundary/);
   assert.match(css, /\.compact-details/);
   assert.match(css, /\.editor-tab-select/);

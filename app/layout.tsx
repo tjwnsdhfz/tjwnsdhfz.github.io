@@ -1,18 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { PUBLISHED_PORTFOLIO_CONTENT } from "../lib/published-portfolio-content";
 import "./globals.css";
 
-const title = "김서준 | 설계·데이터·디지털 프로젝트 포트폴리오";
-const description =
-  "건축 설계와 현장 운영, CAD·데이터 검증, 디지털 프로젝트에서 문제를 정의하고 결과를 검증해 온 김서준의 포트폴리오입니다.";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const published = PUBLISHED_PORTFOLIO_CONTENT;
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://tjwnsdhfz.github.io";
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+const canonicalPath = `${basePath}/` || "/";
+const compactRole = published.identity.role.replace(/\s*·\s*/g, "·");
+const title = `${published.identity.name} | ${compactRole} 포트폴리오`;
+const description = published.hero.description.slice(0, 160);
 
 export const metadata: Metadata = {
     metadataBase: new URL(siteUrl),
     title,
     description,
-    alternates: { canonical: "/" },
+    alternates: { canonical: canonicalPath },
     keywords: [
       "김서준",
       "취업 포트폴리오",
@@ -37,12 +39,13 @@ export const metadata: Metadata = {
       locale: "ko_KR",
       title,
       description,
+      url: canonicalPath,
       siteName: "Kim Seojun Portfolio",
       images: [
         {
-          url: `${basePath}/og-apple.png`,
-          width: 1728,
-          height: 909,
+          url: `${basePath}/og-apple.jpg`,
+          width: 1200,
+          height: 630,
           alt: "김서준 설계·데이터·디지털 프로젝트 포트폴리오",
         },
       ],
@@ -51,7 +54,7 @@ export const metadata: Metadata = {
       card: "summary_large_image",
       title,
       description,
-      images: [`${basePath}/og-apple.png`],
+      images: [`${basePath}/og-apple.jpg`],
     },
   };
 

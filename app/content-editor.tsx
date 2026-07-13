@@ -140,24 +140,33 @@ function EditorDisclosure({ defaultOpen, children }: { defaultOpen: boolean; chi
 }
 
 function ItemActions({
+  itemLabel,
   index,
   count,
   onMove,
   onDuplicate,
   onDelete,
 }: {
+  itemLabel: string;
   index: number;
   count: number;
   onMove: (direction: -1 | 1) => void;
   onDuplicate?: () => void;
   onDelete: () => void;
 }) {
+  const requestDelete = () => {
+    const confirmed = window.confirm(
+      `“${itemLabel}” 항목을 브라우저 초안에서 삭제할까요? GitHub 공개본은 게시 전까지 바뀌지 않습니다.`,
+    );
+    if (confirmed) onDelete();
+  };
+
   return (
     <div className="item-actions">
-      <button type="button" disabled={index === 0} onClick={() => onMove(-1)}>위로</button>
-      <button type="button" disabled={index === count - 1} onClick={() => onMove(1)}>아래로</button>
-      {onDuplicate ? <button type="button" onClick={onDuplicate}>복제</button> : null}
-      <button className="danger-link" type="button" onClick={onDelete}>삭제</button>
+      <button type="button" aria-label={`${itemLabel} 위로 이동`} disabled={index === 0} onClick={() => onMove(-1)}>위로</button>
+      <button type="button" aria-label={`${itemLabel} 아래로 이동`} disabled={index === count - 1} onClick={() => onMove(1)}>아래로</button>
+      {onDuplicate ? <button type="button" aria-label={`${itemLabel} 복제`} onClick={onDuplicate}>복제</button> : null}
+      <button className="danger-link" type="button" aria-label={`${itemLabel} 삭제`} onClick={requestDelete}>삭제</button>
     </div>
   );
 }
@@ -221,6 +230,7 @@ export default function ContentEditor({
   content,
   dirty,
   onChange,
+  onReloadPublished,
   onClose,
   onSaved,
 }: {
@@ -229,6 +239,7 @@ export default function ContentEditor({
   content: PortfolioContent;
   dirty: boolean;
   onChange: (content: PortfolioContent) => void;
+  onReloadPublished: () => void;
   onClose: () => void;
   onSaved: (content: PortfolioContent) => void;
 }) {
@@ -398,6 +409,14 @@ export default function ContentEditor({
       return;
     }
 
+    const confirmed = window.confirm(
+      `${repository} 저장소의 ${branch} 브랜치에 ${filePath}를 게시할까요? 이 작업은 GitHub 공개본과 연결된 배포를 변경합니다.`,
+    );
+    if (!confirmed) {
+      setSaveState({ kind: "idle", message: "GitHub 게시를 취소했습니다. 브라우저 초안은 그대로 유지됩니다." });
+      return;
+    }
+
     setSaveState({ kind: "saving", message: "GitHub에 게시 중…" });
     try {
       const settings = { repository, branch, filePath };
@@ -519,7 +538,7 @@ export default function ContentEditor({
       <aside ref={editorDialogRef} className="content-editor" role="dialog" aria-modal="true" aria-labelledby="editor-title">
         <header className="editor-header">
           <div>
-            <p>LIVE CONTENT</p>
+            <p>BROWSER DRAFT</p>
             <h2 id="editor-title">포트폴리오 편집</h2>
           </div>
           <button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} aria-label="편집기 닫기">
@@ -535,7 +554,18 @@ export default function ContentEditor({
           <button
             type="button"
             onClick={() => {
-              if (window.confirm("기본 템플릿 내용으로 되돌릴까요? 저장 전까지는 사이트에 반영되지 않습니다.")) {
+              const confirmed = window.confirm(
+                "현재 GitHub 공개본을 브라우저 초안으로 다시 불러올까요? 이 브라우저에서 편집 중인 내용은 덮어쓰지만, GitHub 공개본 자체는 바뀌지 않습니다.",
+              );
+              if (!confirmed) return;
+              onReloadPublished();
+              setSaveState({ kind: "idle", message: "현재 GitHub 공개본을 브라우저 초안으로 불러왔습니다." });
+            }}
+          >현재 공개본 다시 불러오기</button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("프로젝트·경력·연락처를 포함한 브라우저 초안 전체를 기본 템플릿으로 되돌릴까요? GitHub 공개본은 게시 전까지 바뀌지 않습니다.")) {
                 onChange(structuredClone(DEFAULT_PORTFOLIO_CONTENT));
               }
             }}
@@ -641,6 +671,7 @@ export default function ContentEditor({
                       />
                     </div>
                     <ItemActions
+                      itemLabel={`핵심 정보 ${fact.label || index + 1}`}
                       index={index}
                       count={content.careerFacts.length}
                       onMove={(direction) => onChange({
@@ -677,7 +708,7 @@ export default function ContentEditor({
                       <Field label={`수치 ${index + 1}`} value={metric.value} onChange={(value) => onChange({ ...content, metrics: content.metrics.map((item, itemIndex) => itemIndex === index ? { ...item, value } : item) })} />
                       <Field label="설명" value={metric.label} onChange={(value) => onChange({ ...content, metrics: content.metrics.map((item, itemIndex) => itemIndex === index ? { ...item, label: value } : item) })} />
                     </div>
-                    <ItemActions index={index} count={content.metrics.length} onMove={(direction) => onChange({ ...content, metrics: moveItem(content.metrics, index, direction) })} onDelete={() => onChange({ ...content, metrics: content.metrics.filter((_, itemIndex) => itemIndex !== index) })} />
+                    <ItemActions itemLabel={`핵심 수치 ${metric.value || index + 1}`} index={index} count={content.metrics.length} onMove={(direction) => onChange({ ...content, metrics: moveItem(content.metrics, index, direction) })} onDelete={() => onChange({ ...content, metrics: content.metrics.filter((_, itemIndex) => itemIndex !== index) })} />
                   </div>
                 ))}
                 <button className="add-button" type="button" onClick={() => onChange({ ...content, metrics: [...content.metrics, { value: "00+", label: "새 지표" }] })}>+ 수치 추가</button>
@@ -701,7 +732,12 @@ export default function ContentEditor({
                     </div>
                     <Textarea label="확인 가능한 근거" value={item.evidence} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, evidence: value } : entry) })} />
                     <Textarea label="업무 적용 방식" value={item.application} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, application: value } : entry) })} />
+                    <div className="field-grid">
+                      <Field label="근거 링크 문구" value={item.evidenceLabel} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, evidenceLabel: value } : entry) })} />
+                      <Field label="근거 링크" value={item.evidenceHref} onChange={(value) => onChange({ ...content, roleFit: content.roleFit.map((entry, itemIndex) => itemIndex === index ? { ...entry, evidenceHref: value } : entry) })} hint="#프로젝트-id 또는 https:// 주소" />
+                    </div>
                     <ItemActions
+                      itemLabel={`핵심 역량 ${item.title || index + 1}`}
                       index={index}
                       count={content.roleFit.length}
                       onMove={(direction) => onChange({ ...content, roleFit: moveItem(content.roleFit, index, direction) })}
@@ -709,7 +745,7 @@ export default function ContentEditor({
                     />
                   </div>
                 ))}
-                <button className="add-button" type="button" onClick={() => onChange({ ...content, roleFit: [...content.roleFit, { label: "0X · CAPABILITY", title: "새 핵심 역량", evidence: "확인 가능한 경험과 산출물", application: "실제 업무에서 적용하는 방식" }] })}>+ 역량 근거 추가</button>
+                <button className="add-button" type="button" onClick={() => onChange({ ...content, roleFit: [...content.roleFit, { id: `capability-${Date.now()}`, label: "0X · CAPABILITY", title: "새 핵심 역량", evidence: "확인 가능한 경험과 산출물", application: "실제 업무에서 적용하는 방식", evidenceLabel: "근거 보기", evidenceHref: "#selected-work" }] })}>+ 역량 근거 추가</button>
               </FormSection>
               <FormSection title="과장 방지 경계" description="아직 경험하지 않은 실무·도구·인증을 명확히 분리합니다.">
                 <Textarea label="경계 문구" value={content.roleBoundary} rows={5} onChange={(value) => onChange({ ...content, roleBoundary: value })} />
@@ -736,6 +772,7 @@ export default function ContentEditor({
                     </summary>
                     <div className="project-editor-body">
                       <ItemActions
+                        itemLabel={`저장소 ${repository.name || index + 1}`}
                         index={index}
                         count={content.repositories.length}
                         onMove={(direction) => onChange({ ...content, repositories: moveItem(content.repositories, index, direction) })}
@@ -747,11 +784,7 @@ export default function ContentEditor({
                           nextRepositories.splice(index + 1, 0, duplicate);
                           onChange({ ...content, repositories: nextRepositories });
                         }}
-                        onDelete={() => {
-                          if (window.confirm(`'${repository.name}' 저장소 카드를 삭제할까요?`)) {
-                            onChange({ ...content, repositories: content.repositories.filter((_, itemIndex) => itemIndex !== index) });
-                          }
-                        }}
+                        onDelete={() => onChange({ ...content, repositories: content.repositories.filter((_, itemIndex) => itemIndex !== index) })}
                       />
                       <div className="check-row">
                         <label><input type="checkbox" checked={repository.visible} onChange={(event) => updateRepository(index, { ...repository, visible: event.target.checked })} /> 사이트에 노출</label>
@@ -798,6 +831,7 @@ export default function ContentEditor({
                   </summary>
                   <div className="project-editor-body">
                     <ItemActions
+                      itemLabel={`프로젝트 ${project.title || index + 1}`}
                       index={index}
                       count={content.projects.length}
                       onMove={(direction) => onChange({ ...content, projects: moveItem(content.projects, index, direction) })}
@@ -809,11 +843,7 @@ export default function ContentEditor({
                         nextProjects.splice(index + 1, 0, duplicate);
                         onChange({ ...content, projects: nextProjects });
                       }}
-                      onDelete={() => {
-                        if (window.confirm(`'${project.title}' 프로젝트를 삭제할까요?`)) {
-                          onChange({ ...content, projects: content.projects.filter((_, itemIndex) => itemIndex !== index) });
-                        }
-                      }}
+                      onDelete={() => onChange({ ...content, projects: content.projects.filter((_, itemIndex) => itemIndex !== index) })}
                     />
                     <div className="check-row">
                       <label><input type="checkbox" checked={project.visible} onChange={(event) => updateProject(index, { ...project, visible: event.target.checked })} /> 사이트에 노출</label>
@@ -837,7 +867,16 @@ export default function ContentEditor({
                       <div className="nested-row" key={`detail-${detailIndex}`}>
                         <Field label="항목" value={detail.label} onChange={(value) => updateProject(index, { ...project, details: project.details.map((item, itemIndex) => itemIndex === detailIndex ? { ...item, label: value } : item) })} />
                         <Textarea label="내용" value={detail.value} rows={3} onChange={(value) => updateProject(index, { ...project, details: project.details.map((item, itemIndex) => itemIndex === detailIndex ? { ...item, value } : item) })} />
-                        <button className="danger-link" type="button" onClick={() => updateProject(index, { ...project, details: project.details.filter((_, itemIndex) => itemIndex !== detailIndex) })}>항목 삭제</button>
+                        <button
+                          className="danger-link"
+                          type="button"
+                          aria-label={`${project.title}의 ${detail.label || `세부 항목 ${detailIndex + 1}`} 삭제`}
+                          onClick={() => {
+                            if (window.confirm(`“${detail.label || `세부 항목 ${detailIndex + 1}`}”을 브라우저 초안에서 삭제할까요?`)) {
+                              updateProject(index, { ...project, details: project.details.filter((_, itemIndex) => itemIndex !== detailIndex) });
+                            }
+                          }}
+                        >항목 삭제</button>
                       </div>
                     ))}
 
@@ -848,7 +887,16 @@ export default function ContentEditor({
                       <div className="nested-row link-row" key={`link-${linkIndex}`}>
                         <Field label="링크 문구" value={item.label} onChange={(value) => updateProject(index, { ...project, links: project.links.map((linkItem, itemIndex) => itemIndex === linkIndex ? { ...linkItem, label: value } : linkItem) })} />
                         <Field label="주소" value={item.href} onChange={(value) => updateProject(index, { ...project, links: project.links.map((linkItem, itemIndex) => itemIndex === linkIndex ? { ...linkItem, href: value } : linkItem) })} />
-                        <button className="danger-link" type="button" onClick={() => updateProject(index, { ...project, links: project.links.filter((_, itemIndex) => itemIndex !== linkIndex) })}>링크 삭제</button>
+                        <button
+                          className="danger-link"
+                          type="button"
+                          aria-label={`${project.title}의 ${item.label || `링크 ${linkIndex + 1}`} 삭제`}
+                          onClick={() => {
+                            if (window.confirm(`“${item.label || `링크 ${linkIndex + 1}`}”를 브라우저 초안에서 삭제할까요?`)) {
+                              updateProject(index, { ...project, links: project.links.filter((_, itemIndex) => itemIndex !== linkIndex) });
+                            }
+                          }}
+                        >링크 삭제</button>
                       </div>
                     ))}
                   </div>
@@ -872,7 +920,7 @@ export default function ContentEditor({
                     <Field label="기간" value={item.period} onChange={(value) => onChange({ ...content, experiences: content.experiences.map((entry, itemIndex) => itemIndex === index ? { ...entry, period: value } : entry) })} />
                     <Field label="역할·기관" value={item.role} onChange={(value) => onChange({ ...content, experiences: content.experiences.map((entry, itemIndex) => itemIndex === index ? { ...entry, role: value } : entry) })} />
                     <Textarea label="설명" value={item.description} onChange={(value) => onChange({ ...content, experiences: content.experiences.map((entry, itemIndex) => itemIndex === index ? { ...entry, description: value } : entry) })} />
-                    <ItemActions index={index} count={content.experiences.length} onMove={(direction) => onChange({ ...content, experiences: moveItem(content.experiences, index, direction) })} onDelete={() => onChange({ ...content, experiences: content.experiences.filter((_, itemIndex) => itemIndex !== index) })} />
+                    <ItemActions itemLabel={`경력 ${item.role || index + 1}`} index={index} count={content.experiences.length} onMove={(direction) => onChange({ ...content, experiences: moveItem(content.experiences, index, direction) })} onDelete={() => onChange({ ...content, experiences: content.experiences.filter((_, itemIndex) => itemIndex !== index) })} />
                   </div>
                 ))}
                 <button className="add-button" type="button" onClick={() => onChange({ ...content, experiences: [...content.experiences, { period: "20XX — NOW", role: "새 경험", description: "담당 업무와 결과" }] })}>+ 경력 추가</button>
@@ -884,7 +932,7 @@ export default function ContentEditor({
                       <Field label="연도" value={award.year} onChange={(value) => onChange({ ...content, awards: content.awards.map((item, itemIndex) => itemIndex === index ? { ...item, year: value } : item) })} />
                       <Field label="내용" value={award.title} onChange={(value) => onChange({ ...content, awards: content.awards.map((item, itemIndex) => itemIndex === index ? { ...item, title: value } : item) })} />
                     </div>
-                    <ItemActions index={index} count={content.awards.length} onMove={(direction) => onChange({ ...content, awards: moveItem(content.awards, index, direction) })} onDelete={() => onChange({ ...content, awards: content.awards.filter((_, itemIndex) => itemIndex !== index) })} />
+                    <ItemActions itemLabel={`수상·리더십 ${award.title || index + 1}`} index={index} count={content.awards.length} onMove={(direction) => onChange({ ...content, awards: moveItem(content.awards, index, direction) })} onDelete={() => onChange({ ...content, awards: content.awards.filter((_, itemIndex) => itemIndex !== index) })} />
                   </div>
                 ))}
                 <button className="add-button" type="button" onClick={() => onChange({ ...content, awards: [...content.awards, { year: "20XX", title: "새 수상·리더십" }] })}>+ 항목 추가</button>
@@ -905,7 +953,7 @@ export default function ContentEditor({
                     <Field label="역량 이름" value={capability.title} onChange={(value) => onChange({ ...content, capabilities: content.capabilities.map((item, itemIndex) => itemIndex === index ? { ...item, title: value } : item) })} />
                     <Field label="한 줄 설명" value={capability.summary} onChange={(value) => onChange({ ...content, capabilities: content.capabilities.map((item, itemIndex) => itemIndex === index ? { ...item, summary: value } : item) })} />
                     <Textarea label="세부 항목" value={toLines(capability.items)} onChange={(value) => onChange({ ...content, capabilities: content.capabilities.map((item, itemIndex) => itemIndex === index ? { ...item, items: fromLines(value) } : item) })} hint="한 줄에 하나씩 입력" />
-                    <ItemActions index={index} count={content.capabilities.length} onMove={(direction) => onChange({ ...content, capabilities: moveItem(content.capabilities, index, direction) })} onDelete={() => onChange({ ...content, capabilities: content.capabilities.filter((_, itemIndex) => itemIndex !== index) })} />
+                    <ItemActions itemLabel={`역량 ${capability.title || index + 1}`} index={index} count={content.capabilities.length} onMove={(direction) => onChange({ ...content, capabilities: moveItem(content.capabilities, index, direction) })} onDelete={() => onChange({ ...content, capabilities: content.capabilities.filter((_, itemIndex) => itemIndex !== index) })} />
                   </div>
                 ))}
                 <button className="add-button" type="button" onClick={() => onChange({ ...content, capabilities: [...content.capabilities, { title: "새 역량", summary: "한 줄 설명", items: ["세부 항목"] }] })}>+ 역량 추가</button>

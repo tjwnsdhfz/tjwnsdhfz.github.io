@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_PORTFOLIO_CONTENT } from "../../lib/portfolio-content";
+import { PUBLISHED_PORTFOLIO_CONTENT } from "../../lib/published-portfolio-content";
 import PortfolioSite from "../portfolio-site";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function EditPage() {
   return (
     <PortfolioSite
-      initialContent={DEFAULT_PORTFOLIO_CONTENT}
+      initialContent={PUBLISHED_PORTFOLIO_CONTENT}
       canEdit
       initialEditorOpen
     />

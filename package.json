@@ -12,7 +12,7 @@
     "start": "next dev",
     "dev:portable": "next dev",
     "build:portable": "cross-env PORTFOLIO_STATIC_EXPORT=true next build",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --experimental-strip-types --test tests/rendered-html.test.mjs tests/portfolio-content.test.mjs",
     "lint": "eslint app lib scripts tests"
   },
   "dependencies": {

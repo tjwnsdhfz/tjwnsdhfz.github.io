@@ -41,14 +41,14 @@ GitHub 저장소를 연결한 뒤 다음 값만 지정합니다.
 
 1. 배포 주소 뒤에 `/edit/`를 붙여 편집기를 엽니다.
 2. 문구, 프로젝트, 경력, 역량, 연락처를 수정합니다.
-3. 변경 내용은 약 0.9초 뒤 현재 브라우저에 자동 저장되며 `지금 저장`으로 즉시 저장할 수도 있습니다.
+3. 변경 내용은 약 0.9초 뒤 현재 브라우저에 자동 저장되며 `브라우저 초안 저장`으로 즉시 저장할 수도 있습니다.
 4. `JSON 내보내기`로 복구 가능한 백업을 받습니다.
 5. `게시·배포` 탭에서 기본 저장소 `tjwnsdhfz/tjwnsdhfz.github.io`와 `main` 브랜치를 확인합니다.
 6. 해당 저장소에만 `Contents: Read and write` 권한을 준 fine-grained token을 입력하고 `GitHub에 게시`를 누릅니다.
 
 토큰은 React 메모리에만 보관되며 localStorage, JSON, Git 저장소에 기록되지 않습니다. 새로고침하면 사라집니다. 저장소·브랜치·콘텐츠 경로만 브라우저에 저장됩니다. 공개 `/edit/` 화면에서 토큰을 사용할 때는 본인 기기에서만 접속하고, 반드시 해당 저장소 하나의 `Contents: Read and write` 권한만 부여한 fine-grained token을 사용합니다.
 
-게시 대상 파일은 기본적으로 `public/portfolio-content.json`입니다. GitHub에 새 커밋이 생기면 연결된 호스팅 서비스가 자동으로 다시 배포하고, 방문자는 새 JSON을 읽습니다.
+게시 대상 파일은 기본적으로 `public/portfolio-content.json`입니다. GitHub에 새 커밋이 생기면 lint, 콘텐츠 검증, 정적 빌드를 통과한 뒤 다시 배포합니다. 공개 화면·검색용 HTML·공유 메타데이터는 모두 이 JSON을 빌드 시점의 단일 공개본으로 읽습니다.
 
 `npm run content:sync`는 코드에 들어 있는 기본 템플릿을 JSON에 다시 복사하는 초기화 명령입니다. 웹이나 GitHub에서 JSON을 수정한 뒤에는 실행하지 마세요. 일반 빌드는 JSON을 덮어쓰지 않습니다.
 

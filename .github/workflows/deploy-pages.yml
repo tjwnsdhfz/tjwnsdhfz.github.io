@@ -38,7 +38,8 @@ jobs:
           echo "NEXT_PUBLIC_SITE_URL=https://${GITHUB_REPOSITORY_OWNER}.github.io" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_GITHUB_REPO=$GITHUB_REPOSITORY" >> "$GITHUB_ENV"
       - run: npm ci
-      - run: npm run build:portable
+      - run: npm run lint
+      - run: npm test
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

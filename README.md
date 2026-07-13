@@ -37,17 +37,18 @@ npm run build:portable
 ## Validation
 
 ```bash
-npm run build
 npm run lint
-node --test tests/rendered-html.test.mjs
+npm test
 ```
+
+`npm test`는 정적 빌드, 실제 렌더링 확인, 공개 JSON 무결성, 프리셋 재정렬 회귀를 함께 검사합니다. GitHub Pages도 같은 검증을 통과한 뒤에만 배포합니다.
 
 ## Main files
 
 - `app/page.tsx`: 공개 포트폴리오 진입점
 - `app/edit/page.tsx`: 사이트 내 편집 화면
 - `app/content-editor.tsx`: 초안, JSON, GitHub 게시 편집기
-- `public/portfolio-content.json`: 배포 시 교체되는 콘텐츠 파일
+- `public/portfolio-content.json`: 화면·검색·공유 메타데이터가 함께 읽는 공개 콘텐츠 단일 소스
 - `scripts/export-default-content.ts`: 기본 콘텐츠를 공개 JSON에 초기 반영하는 수동 동기화 도구
 - `app/globals.css`: 반응형 디자인 시스템
 - `app/layout.tsx`: 메타데이터, 공유 카드, 폰트

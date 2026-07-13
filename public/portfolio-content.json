@@ -16,8 +16,8 @@
     "highlight": "확인 가능한 결과로 바꿉니다.",
     "description": "건축학에서 익힌 도면·공간 이해, 100개 이상의 현장 실측 평면 경험, 코드 기반 검증 프로젝트를 바탕으로 문제를 구조화하고 결과를 다시 확인합니다. 설계·데이터·협업 기록을 연결해 제가 맡은 판단과 결과를 설명할 수 있도록 일합니다.",
     "primaryCta": {
-      "label": "대표 Case Study",
-      "href": "https://datumguard-tjwnsdhfz.vercel.app/case-study"
+      "label": "대표 작업 보기",
+      "href": "#selected-work"
     },
     "secondaryCta": {
       "label": "핵심 역량 30초",
@@ -71,28 +71,40 @@
   },
   "roleFit": [
     {
+      "id": "requirements",
       "label": "01 · REQUIREMENTS",
       "title": "요구조건을 구체화하는 설계",
       "evidence": "AutoCAD·Rhino·SketchUp으로 건축 도면과 3D 모델을 작성하고, 현장 실측 조건을 100개 이상의 셀프스토리지 평면으로 전환했습니다.",
-      "application": "모호한 요구를 치수, 화면, 데이터 구조로 구체화하고 체크리스트로 누락과 충돌을 다시 확인합니다."
+      "application": "모호한 요구를 치수, 화면, 데이터 구조로 구체화하고 체크리스트로 누락과 충돌을 다시 확인합니다.",
+      "evidenceLabel": "현장 설계 경험 보기",
+      "evidenceHref": "#experience"
     },
     {
+      "id": "system-review",
       "label": "02 · SYSTEM REVIEW",
       "title": "구조·공간·사용자 흐름 검토",
       "evidence": "구조 프레임, 주거 유닛, 공용 동선과 무장애 조건을 하나의 공간 체계로 검토하고 도면·다이어그램으로 설명했습니다.",
-      "application": "구성 요소, 흐름, 접근성과 제약조건을 함께 보는 모델 기반 검토 역량으로 확장했습니다."
+      "application": "구성 요소, 흐름, 접근성과 제약조건을 함께 보는 모델 기반 검토 역량으로 확장했습니다.",
+      "evidenceLabel": "공간 검토 작업 보기",
+      "evidenceHref": "#time-after-time"
     },
     {
+      "id": "quality-control",
       "label": "03 · QUALITY CONTROL",
       "title": "품질 검증과 변경 추적",
       "evidence": "DatumGuard에서 요구조건을 versioned contract로 고정하고 DXF·STEP·IFC를 별도 reader로 재측정한 뒤 통과 파일만 승인합니다.",
-      "application": "입력 → 산출물 → 독립 검토 → 변경 기록 → 승인으로 이어지는 닫힌 흐름을 구현했습니다."
+      "application": "입력 → 산출물 → 독립 검토 → 변경 기록 → 승인으로 이어지는 닫힌 흐름을 구현했습니다.",
+      "evidenceLabel": "DatumGuard 근거 보기",
+      "evidenceHref": "#datumguard"
     },
     {
+      "id": "field-team",
       "label": "04 · FIELD & TEAM",
       "title": "현장·안전·협업 문서화",
       "evidence": "실측·고객 협의와 공병 분대장 경험에서 조건과 위험을 기록하고, 인원과 임무를 조율하며 절차를 지켰습니다.",
-      "application": "타 부서·현장과 검토 근거를 짧고 정확하게 공유하고, 모호한 조건은 질문과 기록으로 닫는 태도를 갖췄습니다."
+      "application": "타 부서·현장과 검토 근거를 짧고 정확하게 공유하고, 모호한 조건은 질문과 기록으로 닫는 태도를 갖췄습니다.",
+      "evidenceLabel": "현장·협업 경험 보기",
+      "evidenceHref": "#experience"
     }
   ],
   "roleBoundary": "현재 보유 근거는 건축·BIM/CAD, 현장 운영, 공개 설계 QA와 데이터 검증 프로젝트입니다. 각 프로젝트의 합성 데이터·학업 결과·진행 중 범위를 구분해 표시하며, 수행하지 않은 산업 실무나 승인 경험은 보유 역량으로 주장하지 않습니다.",
@@ -104,50 +116,12 @@
     "supportingTitle": "설계·데이터·협업 프로젝트"
   },
   "repositoryIntro": {
-    "eyebrow": "PUBLIC WORK & EVIDENCE",
-    "title": "주장보다 코드·테스트·변경 기록",
-    "description": "구현 범위, 실패 사례, 테스트 수치와 변경 이력을 공개 저장소에서 다시 확인할 수 있습니다. 메인에는 역할과 결과를 구체적으로 설명할 수 있는 작업만 선별했습니다.",
+    "eyebrow": "ADDITIONAL PUBLIC WORK",
+    "title": "대표 작업 밖의 공개 프로젝트",
+    "description": "DatumGuard와 Modu Brain의 Source는 각 프로젝트 카드에 바로 연결했습니다. 이곳에는 중복 설명 대신 다른 문제 영역을 보여주는 추가 공개 작업만 정리했습니다.",
     "profileLabel": "@tjwnsdhfz 전체 저장소"
   },
   "repositories": [
-    {
-      "id": "repo-datumguard",
-      "name": "DatumGuard",
-      "fullName": "tjwnsdhfz/datumguard",
-      "description": "Versioned contract로 요구조건을 고정하고 저장된 DXF·STEP·IFC를 독립 reader로 다시 열어 치수·datum·clearance·revision 근거를 만드는 설계 품질 도구입니다.",
-      "repositoryUrl": "https://github.com/tjwnsdhfz/datumguard",
-      "demoUrl": "https://datumguard-tjwnsdhfz.vercel.app",
-      "demoLabel": "Live demo",
-      "language": "Python · TypeScript",
-      "status": "v0.3.0 · Public · Live",
-      "tags": [
-        "DXF",
-        "STEP",
-        "IFC",
-        "Change Control",
-        "Independent Verification"
-      ],
-      "visible": true
-    },
-    {
-      "id": "repo-modu-brain",
-      "name": "Modu Brain",
-      "fullName": "tjwnsdhfz/modu-brain",
-      "description": "회의록과 리서치에 흩어진 결정 배경, 참여자 관점, 미결 질문을 원문 근거와 함께 구조화하는 협업 맥락 웹 앱입니다.",
-      "repositoryUrl": "https://github.com/tjwnsdhfz/modu-brain",
-      "demoUrl": "https://modu-brain-demo.onrender.com/demo",
-      "demoLabel": "Demo",
-      "language": "TypeScript · SQL",
-      "status": "Public · Standalone",
-      "tags": [
-        "React",
-        "Supabase",
-        "OpenAI",
-        "RLS",
-        "Playwright"
-      ],
-      "visible": true
-    },
     {
       "id": "repo-greenmiles",
       "name": "GreenMiles MVP",
@@ -189,8 +163,8 @@
           "value": "문제 범위를 설계 품질 보증으로 좁히고 contract, writer, 독립 reader, approval gate와 배포 검증을 구현했습니다."
         },
         {
-          "label": "Transferable approach",
-          "value": "요구조건 → 산출물 → 독립 재검토 → 변경 기록 → 승인 gate 순서로 검토 흐름을 닫고, 하나라도 실패하면 공식 bundle을 차단합니다."
+          "label": "Outcome",
+          "value": "DXF·STEP·IFC를 같은 기준으로 재측정하고, 실패 파일이 승인 결과에 포함되지 않도록 자동 차단했습니다."
         },
         {
           "label": "Verified evidence",
@@ -259,6 +233,10 @@
         {
           "label": "Live demo",
           "href": "https://modu-brain-demo.onrender.com/demo"
+        },
+        {
+          "label": "GitHub",
+          "href": "https://github.com/tjwnsdhfz/modu-brain"
         }
       ]
     },
@@ -472,9 +450,9 @@
     }
   ],
   "capabilityIntro": {
-    "eyebrow": "TRANSFERABLE CAPABILITIES",
-    "title": "설계·데이터·협업을 연결하는 실행 역량",
-    "description": "도구 이름보다 어떤 입력을 다루고, 무엇을 다시 확인하며, 어떤 근거를 남겼는지로 구분했습니다."
+    "eyebrow": "TOOLS · METHODS · CREDENTIALS",
+    "title": "도구·자격·검증 방식을 한눈에",
+    "description": "핵심 역량의 근거가 된 도구, 산출물, 검증 방법과 자격을 빠르게 확인할 수 있도록 묶었습니다."
   },
   "capabilities": [
     {

@@ -12,10 +12,10 @@ import ContentEditor, { type EditorTab } from "./content-editor";
 
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
 const primaryNavigation = [
-  { id: "role-fit", label: "핵심 역량" },
   { id: "selected-work", label: "대표 작업" },
+  { id: "role-fit", label: "핵심 역량" },
   { id: "experience", label: "경험" },
-  { id: "repositories", label: "검증 근거" },
+  { id: "repositories", label: "GitHub" },
   { id: "contact", label: "연락" },
 ] as const;
 
@@ -141,47 +141,46 @@ export default function PortfolioSite({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("top");
   const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileNavigationRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    let active = true;
-
-    const loadContent = async () => {
-      let nextContent = initialContent;
+    if (!canEdit) return;
+    const frame = window.requestAnimationFrame(() => {
       try {
-        const response = await fetch(portablePath("/portfolio-content.json"), { cache: "no-store" });
-        if (response.ok) nextContent = sanitizePortfolioContent(await response.json());
+        const draft = window.localStorage.getItem(PORTFOLIO_DRAFT_STORAGE_KEY);
+        if (!draft) return;
+        const nextContent = sanitizePortfolioContent(JSON.parse(draft));
+        setContent(nextContent);
+        setSavedContent(nextContent);
       } catch {
-        // The embedded defaults keep the portfolio usable offline and on first deploy.
+        window.localStorage.removeItem(PORTFOLIO_DRAFT_STORAGE_KEY);
       }
-
-      if (canEdit) {
-        try {
-          const draft = window.localStorage.getItem(PORTFOLIO_DRAFT_STORAGE_KEY);
-          if (draft) nextContent = sanitizePortfolioContent(JSON.parse(draft));
-        } catch {
-          window.localStorage.removeItem(PORTFOLIO_DRAFT_STORAGE_KEY);
-        }
-      }
-
-      if (!active) return;
-      setContent(nextContent);
-      setSavedContent(nextContent);
-    };
-
-    void loadContent();
-    return () => {
-      active = false;
-    };
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [canEdit, initialContent]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const navigationLinks = Array.from(mobileNavigationRef.current?.querySelectorAll<HTMLAnchorElement>("a[href]") ?? []);
+    requestAnimationFrame(() => navigationLinks[0]?.focus());
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMobileNavOpen(false);
         requestAnimationFrame(() => mobileMenuTriggerRef.current?.focus());
+        return;
+      }
+      if (event.key !== "Tab" || !navigationLinks.length) return;
+
+      const first = navigationLinks[0];
+      const last = navigationLinks[navigationLinks.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -195,9 +194,14 @@ export default function PortfolioSite({
     let animationFrame = 0;
     const updateActiveSection = () => {
       let nextSection = "top";
+      let closestTop = Number.NEGATIVE_INFINITY;
       for (const item of primaryNavigation) {
         const section = document.getElementById(item.id);
-        if (section && section.getBoundingClientRect().top <= 150) nextSection = item.id;
+        const sectionTop = section?.getBoundingClientRect().top;
+        if (typeof sectionTop === "number" && sectionTop <= 150 && sectionTop > closestTop) {
+          closestTop = sectionTop;
+          nextSection = item.id;
+        }
       }
       setActiveSection((current) => current === nextSection ? current : nextSection);
     };
@@ -220,6 +224,17 @@ export default function PortfolioSite({
     () => JSON.stringify(content) !== JSON.stringify(savedContent),
     [content, savedContent],
   );
+
+  useEffect(() => {
+    if (!canEdit || !dirty) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [canEdit, dirty]);
+
   const visibleProjects = content.projects.filter((project) => project.visible);
   const visibleRepositories = content.repositories.filter((repository) => repository.visible);
   const featuredProjects = visibleProjects.filter((project) => project.featured);
@@ -233,6 +248,12 @@ export default function PortfolioSite({
   const openEditor = (tab: EditorTab) => {
     setEditorTab(tab);
     setEditorOpen(true);
+  };
+
+  const finishMobileNavigation = (sectionId: string) => {
+    if (!mobileNavOpen) return;
+    setMobileNavOpen(false);
+    requestAnimationFrame(() => document.getElementById(sectionId)?.focus({ preventScroll: true }));
   };
 
   return (
@@ -261,20 +282,17 @@ export default function PortfolioSite({
             <MenuIcon open={mobileNavOpen} />
           </button>
           <nav
+            ref={mobileNavigationRef}
             id="primary-navigation"
             className={mobileNavOpen ? "is-open" : ""}
             aria-label="주요 메뉴"
-            onClick={() => {
-              if (!mobileNavOpen) return;
-              setMobileNavOpen(false);
-              requestAnimationFrame(() => mobileMenuTriggerRef.current?.focus());
-            }}
           >
             {primaryNavigation.map((item) => (
               <a
                 href={`#${item.id}`}
                 key={item.id}
                 aria-current={activeSection === item.id ? "location" : undefined}
+                onClick={() => finishMobileNavigation(item.id)}
               >
                 {item.label}
               </a>
@@ -358,7 +376,7 @@ export default function PortfolioSite({
           </dl>
         </section>
 
-        <section className="role-fit-section" id="role-fit" aria-labelledby="role-fit-title">
+        <section className="role-fit-section" id="role-fit" aria-labelledby="role-fit-title" tabIndex={-1}>
           <div className="role-fit-heading shell">
             <div>
               <p className="eyebrow">{content.roleFitIntro.eyebrow}</p>
@@ -377,6 +395,7 @@ export default function PortfolioSite({
                 <div className="role-fit-evidence">
                   <span>확인 가능한 근거</span>
                   <p>{item.evidence}</p>
+                  <SmartLink href={item.evidenceHref} label={item.evidenceLabel} className="role-fit-proof-link" />
                 </div>
                 <div className="role-fit-application">
                   <span>업무 적용 방식</span>
@@ -391,7 +410,7 @@ export default function PortfolioSite({
           </aside>
         </section>
 
-        <section className="work-index shell" id="selected-work" aria-labelledby="work-title">
+        <section className="work-index shell" id="selected-work" aria-labelledby="work-title" tabIndex={-1}>
           <p className="eyebrow">{content.projectIntro.eyebrow}</p>
           <h2 id="work-title">{content.projectIntro.title}</h2>
           <p>{content.projectIntro.description}</p>
@@ -399,7 +418,7 @@ export default function PortfolioSite({
         </section>
 
         {featuredProjects.map((project) => (
-          <section className={`featured-project tone-${project.tone}`} key={project.id} id={project.id}>
+          <section className={`featured-project tone-${project.tone}`} key={project.id} id={project.id} tabIndex={-1}>
             <div className="featured-copy shell">
               <p className="project-category">{project.category}</p>
               <h2>{project.title}</h2>
@@ -429,7 +448,7 @@ export default function PortfolioSite({
             </div>
             <div className="project-grid">
               {supportingProjects.map((project) => (
-                <article className={`compact-project tone-${project.tone}`} key={project.id}>
+                <article className={`compact-project tone-${project.tone}`} key={project.id} id={project.id} tabIndex={-1}>
                   <div className="compact-copy">
                     <p className="project-category">{project.category}</p>
                     <h3>{project.title}</h3>
@@ -459,7 +478,7 @@ export default function PortfolioSite({
           </section>
         ) : null}
 
-        <section className="experience-section" id="experience" aria-labelledby="experience-title">
+        <section className="experience-section" id="experience" aria-labelledby="experience-title" tabIndex={-1}>
           <div className="section-intro shell">
             <p className="eyebrow">{content.experienceIntro.eyebrow}</p>
             <h2 id="experience-title">{content.experienceIntro.title}</h2>
@@ -487,7 +506,7 @@ export default function PortfolioSite({
           </div>
         </section>
 
-        <section className="repository-section" id="repositories" aria-labelledby="repositories-title">
+        <section className="repository-section" id="repositories" aria-labelledby="repositories-title" tabIndex={-1}>
           <div className="repository-heading shell">
             <div>
               <p className="eyebrow">{content.repositoryIntro.eyebrow}</p>
@@ -530,7 +549,7 @@ export default function PortfolioSite({
           </div>
         </section>
 
-        <section className="contact-section" id="contact" aria-labelledby="contact-title">
+        <section className="contact-section" id="contact" aria-labelledby="contact-title" tabIndex={-1}>
           <div className="contact-inner shell">
             <p className="eyebrow">{content.contact.eyebrow}</p>
             <h2 id="contact-title">{content.contact.title}</h2>
@@ -558,6 +577,7 @@ export default function PortfolioSite({
           content={content}
           dirty={dirty}
           onChange={setContent}
+          onReloadPublished={() => setContent(initialContent)}
           onClose={requestCloseEditor}
           onSaved={(nextContent) => {
             setContent(nextContent);

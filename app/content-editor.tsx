@@ -238,6 +238,8 @@ export default function ContentEditor({
   const [publishSettings, setPublishSettings] = useState<GitHubPublishSettings>(defaultPublishSettings);
   const [githubToken, setGithubToken] = useState("");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const editorDialogRef = useRef<HTMLElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const editorBodyRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -254,15 +256,40 @@ export default function ContentEditor({
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
+    previouslyFocusedRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCloseRef.current();
+      if (event.key === "Escape") {
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(editorDialogRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? []).filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement;
+      if (event.shiftKey && (activeElement === first || !editorDialogRef.current?.contains(activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
+      const previousFocus = previouslyFocusedRef.current;
+      if (previousFocus?.isConnected) requestAnimationFrame(() => previousFocus.focus());
     };
   }, [open]);
 
@@ -307,8 +334,9 @@ export default function ContentEditor({
     }
     setTab(nextTab);
     requestAnimationFrame(() => {
-      editorBodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      trigger?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      editorBodyRef.current?.scrollTo({ top: 0, behavior });
+      trigger?.scrollIntoView({ behavior, block: "nearest", inline: "center" });
     });
   };
 
@@ -448,7 +476,7 @@ export default function ContentEditor({
     <div className="editor-overlay" role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}>
-      <aside className="content-editor" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+      <aside ref={editorDialogRef} className="content-editor" role="dialog" aria-modal="true" aria-labelledby="editor-title">
         <header className="editor-header">
           <div>
             <p>LIVE CONTENT</p>

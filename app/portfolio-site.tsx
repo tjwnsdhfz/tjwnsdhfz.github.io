@@ -11,6 +11,13 @@ import ContentEditor, { type EditorTab } from "./content-editor";
 
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
 const draftStorageKey = "kim-seojun-portfolio-draft-v2-hd-design";
+const primaryNavigation = [
+  { id: "role-fit", label: "직무 적합성" },
+  { id: "selected-work", label: "대표 작업" },
+  { id: "experience", label: "경험" },
+  { id: "repositories", label: "검증 근거" },
+  { id: "contact", label: "연락" },
+] as const;
 
 function portablePath(value: string): string {
   if (value.startsWith("/") && !value.startsWith("//")) return `${basePath}${value}`;
@@ -60,6 +67,7 @@ function SmartLink({ href, label, className = "text-link" }: { href: string; lab
   return (
     <a className={className} href={resolvedHref} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined}>
       <span>{label}</span>
+      {external ? <span className="visually-hidden">새 탭에서 열림</span> : null}
       <ArrowIcon />
     </a>
   );
@@ -69,12 +77,20 @@ function ProjectDetails({ project }: { project: PortfolioProject }) {
   if (!project.details.length) return null;
   return (
     <dl className={`project-details details-count-${project.details.length}`}>
-      {project.details.map((detail, index) => (
-        <div key={`${detail.label}-${index}`}>
-          <dt>{detail.label}</dt>
-          <dd>{detail.value}</dd>
-        </div>
-      ))}
+      {project.details.map((detail, index) => {
+        const normalizedLabel = detail.label.toLowerCase();
+        const emphasisClass = /verified|proof|검증/.test(normalizedLabel)
+          ? "is-proof"
+          : /boundary|limit|한계/.test(normalizedLabel)
+            ? "is-boundary"
+            : "";
+        return (
+          <div className={emphasisClass} key={`${detail.label}-${index}`}>
+            <dt>{detail.label}</dt>
+            <dd>{detail.value}</dd>
+          </div>
+        );
+      })}
     </dl>
   );
 }
@@ -90,12 +106,14 @@ function RepositoryCard({ repository }: { repository: RepositoryItem }) {
         <span className="repository-status">{repository.status}</span>
       </div>
       <p className="repository-description">{repository.description}</p>
-      <div className="repository-language">
-        <i aria-hidden="true" />
-        <span>{repository.language}</span>
-      </div>
-      <div className="tag-row" aria-label={`${repository.name} 기술`}>
-        {repository.tags.map((tag) => <span key={tag}>{tag}</span>)}
+      <div className="repository-meta">
+        <div className="repository-language">
+          <i aria-hidden="true" />
+          <span>{repository.language}</span>
+        </div>
+        <div className="tag-row" aria-label={`${repository.name} 기술`}>
+          {repository.tags.map((tag) => <span key={tag}>{tag}</span>)}
+        </div>
       </div>
       <div className="repository-links">
         <SmartLink href={repository.repositoryUrl} label="Source" />
@@ -121,6 +139,7 @@ export default function PortfolioSite({
   const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
   const [editorTab, setEditorTab] = useState<EditorTab>("basic");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("top");
   const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -157,6 +176,8 @@ export default function PortfolioSite({
 
   useEffect(() => {
     if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMobileNavOpen(false);
@@ -164,8 +185,36 @@ export default function PortfolioSite({
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [mobileNavOpen]);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    const updateActiveSection = () => {
+      let nextSection = "top";
+      for (const item of primaryNavigation) {
+        const section = document.getElementById(item.id);
+        if (section && section.getBoundingClientRect().top <= 150) nextSection = item.id;
+      }
+      setActiveSection((current) => current === nextSection ? current : nextSection);
+    };
+    const scheduleUpdate = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(updateActiveSection);
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
 
   const dirty = useMemo(
     () => JSON.stringify(content) !== JSON.stringify(savedContent),
@@ -192,7 +241,12 @@ export default function PortfolioSite({
 
       <header className="global-nav">
         <div className="nav-inner">
-          <a className="monogram" href="#top" aria-label={`${content.identity.name} 포트폴리오 홈`}>
+          <a
+            className="monogram"
+            href="#top"
+            aria-label={`${content.identity.name} 포트폴리오 홈`}
+            aria-current={activeSection === "top" ? "location" : undefined}
+          >
             {content.identity.monogram}
           </a>
           <button
@@ -210,15 +264,21 @@ export default function PortfolioSite({
             id="primary-navigation"
             className={mobileNavOpen ? "is-open" : ""}
             aria-label="주요 메뉴"
-            onClick={() => setMobileNavOpen(false)}
+            onClick={() => {
+              if (!mobileNavOpen) return;
+              setMobileNavOpen(false);
+              requestAnimationFrame(() => mobileMenuTriggerRef.current?.focus());
+            }}
           >
-            <a href="#about">소개</a>
-            <a href="#role-fit">직무 적합성</a>
-            <a href="#selected-work">작업</a>
-            <a href="#experience">경험</a>
-            <a href="#repositories">GitHub</a>
-            <a href="#capabilities">기술</a>
-            <a href="#contact">연락처</a>
+            {primaryNavigation.map((item) => (
+              <a
+                href={`#${item.id}`}
+                key={item.id}
+                aria-current={activeSection === item.id ? "location" : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
           </nav>
         </div>
       </header>
@@ -227,7 +287,7 @@ export default function PortfolioSite({
         <div className="nav-inner">
           <a className="portfolio-title" href="#top">
             <strong>{content.identity.name}</strong>
-            <span>{content.identity.githubHandle}</span>
+            <span>{content.identity.role}</span>
           </a>
           <div className="portfolio-actions">
             <span className="availability"><i />{content.identity.status}</span>
@@ -247,7 +307,7 @@ export default function PortfolioSite({
         </div>
       </div>
 
-      <main id="main-content">
+      <main id="main-content" tabIndex={-1}>
         <section className="hero" id="top" aria-labelledby="hero-title">
           <div className="hero-copy shell">
             <p className="eyebrow">{content.hero.eyebrow}</p>
@@ -310,8 +370,10 @@ export default function PortfolioSite({
           <div className="role-fit-grid shell">
             {content.roleFit.map((item, index) => (
               <article key={`${item.label}-${index}`}>
-                <p className="role-fit-label">{item.label}</p>
-                <h3>{item.title}</h3>
+                <div className="role-fit-capability">
+                  <p className="role-fit-label">{item.label}</p>
+                  <h3>{item.title}</h3>
+                </div>
                 <div className="role-fit-evidence">
                   <span>확인 가능한 근거</span>
                   <p>{item.evidence}</p>
@@ -437,7 +499,7 @@ export default function PortfolioSite({
               <SmartLink href={content.identity.github} label={content.repositoryIntro.profileLabel} />
             </div>
           </div>
-          <div className="repository-grid shell">
+          <div className={`repository-grid shell${visibleRepositories.length === 1 ? " is-single" : ""}`}>
             {visibleRepositories.map((repository) => (
               <RepositoryCard repository={repository} key={repository.id} />
             ))}

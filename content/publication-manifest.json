@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "items": [
+    { "canonicalId": "person:self", "approved": true },
+    { "canonicalId": "career:kim-seojun", "approved": true },
+    { "canonicalId": "project:datumguard", "approved": true },
+    { "canonicalId": "project:modu-brain", "approved": true },
+    { "canonicalId": "project:greenmiles", "approved": true },
+    { "canonicalId": "project:baram-2026", "approved": true }
+  ]
+}

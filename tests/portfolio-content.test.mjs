@@ -3,72 +3,33 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import {
-  DEFAULT_PORTFOLIO_CONTENT,
-  applyGeneralProfile,
-  sanitizePortfolioContent,
-} from "../lib/portfolio-content.ts";
+import { sanitizePortfolioContent } from "../lib/portfolio-content.ts";
 
-const projectRoot = fileURLToPath(new URL("../", import.meta.url));
+const root = fileURLToPath(new URL("../", import.meta.url));
+const rawText = await readFile(path.join(root, "public/portfolio-content.json"), "utf8");
+const content = sanitizePortfolioContent(JSON.parse(rawText));
 
-test("general profile preset preserves facts and capability evidence by stable meaning", () => {
-  const content = structuredClone(DEFAULT_PORTFOLIO_CONTENT);
-  content.careerFacts = [
-    content.careerFacts[1],
-    { label: "Target", value: "특정 기업 맞춤" },
-    content.careerFacts[2],
-    content.careerFacts[3],
-  ];
-  content.roleFit = content.roleFit
-    .map((item) => ({ ...item, evidence: `custom-evidence:${item.id}` }))
-    .reverse();
-
-  const result = applyGeneralProfile(content);
-
-  assert.equal(result.careerFacts[0].label, "Education");
-  assert.equal(result.careerFacts[0].value, "경북대학교 건축학과 5년제");
-  assert.deepEqual(result.careerFacts.map((fact) => fact.label), ["Education", "Focus", "GPA", "Language"]);
-  assert.deepEqual(result.roleFit.map((item) => item.id), DEFAULT_PORTFOLIO_CONTENT.roleFit.map((item) => item.id));
-  for (const item of result.roleFit) assert.equal(item.evidence, `custom-evidence:${item.id}`);
-  assert.equal(result.hero.primaryCta.href, "#selected-work");
+test("public data uses the evidence schema and has no featured project", () => {
+  assert.equal(content.version, 2);
+  assert.ok(content.projects.length >= 4);
+  assert.equal(content.experiences.length, 4);
+  assert.ok(content.activities.length >= 8);
+  assert.ok(content.experiences.every((item) => item.period && item.organization && item.role));
+  assert.ok(content.activities.every((item) => item.period && item.organization && item.role));
+  assert.ok(content.projects.every((project) => project.featured === false));
+  assert.ok(content.projects.every((project) => project.myRole && project.proof && project.boundary));
+  assert.equal(new Set(content.projects.map((project) => project.canonicalId)).size, content.projects.length);
 });
 
-test("legacy capability rows gain stable ids after reordering", () => {
-  const legacy = structuredClone(DEFAULT_PORTFOLIO_CONTENT);
-  legacy.roleFit = legacy.roleFit.reverse().map((item) => {
-    const withoutId = { ...item };
-    delete withoutId.id;
-    return withoutId;
-  });
-
-  const sanitized = sanitizePortfolioContent(legacy);
-  assert.deepEqual(
-    sanitized.roleFit.map((item) => item.id),
-    ["field-team", "quality-control", "system-review", "requirements"],
-  );
+test("public data omits private paths, identifiers, and unapproved claims", () => {
+  assert.doesNotMatch(rawText, /[A-Za-z]:\\|OneDrive|2021116351|100\+|312건|16건|9\.5억원|장려상|3위|초대 회장|현재 재직|\bNOW\b/i);
+  assert.doesNotMatch(rawText, /"evidenceState"\s*:\s*"low"/);
+  assert.match(rawText, /thatsceo@naver\.com/);
 });
 
-test("published portfolio data has unique anchors, valid proof targets, and existing local images", async () => {
-  const raw = JSON.parse(await readFile(path.join(projectRoot, "public", "portfolio-content.json"), "utf8"));
-  const content = sanitizePortfolioContent(raw);
-  const projectIds = content.projects.map((project) => project.id);
-  const repositoryIds = content.repositories.map((repository) => repository.id);
-  const capabilityIds = content.roleFit.map((item) => item.id);
-
-  assert.equal(new Set(projectIds).size, projectIds.length);
-  assert.equal(new Set(repositoryIds).size, repositoryIds.length);
-  assert.equal(new Set(capabilityIds).size, capabilityIds.length);
-  assert.equal(content.hero.primaryCta.href, "#selected-work");
-
-  const knownTargets = new Set(["selected-work", "role-fit", "experience", "repositories", "contact", ...projectIds]);
-  for (const item of content.roleFit) {
-    assert.ok(item.evidenceLabel.length > 0);
-    if (item.evidenceHref.startsWith("#")) {
-      assert.ok(knownTargets.has(item.evidenceHref.slice(1)), `unknown evidence target: ${item.evidenceHref}`);
-    }
+test("all local public images exist and source refs are safe", async () => {
+  for (const image of [content.hero.image, ...content.projects.map((project) => project.image)]) {
+    if (image.startsWith("/")) await access(path.join(root, "public", image.slice(1)));
   }
-
-  for (const image of [content.hero.image, ...content.projects.filter((project) => project.visible).map((project) => project.image)]) {
-    if (image.startsWith("/")) await access(path.join(projectRoot, "public", image.slice(1)));
-  }
+  for (const project of content.projects) for (const ref of project.sourceRefs) assert.match(ref, /^(canonical:|https:\/\/)/);
 });

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">GreenMiles 제품 흐름</title>
+  <desc id="desc">구매 증빙에서 포인트와 ESG 기록으로 이어지는 프로토타입 흐름</desc>
+  <rect width="1200" height="800" fill="#f5f5f7"/>
+  <g fill="none" stroke="#1d1d1f" stroke-width="3">
+    <rect x="110" y="250" width="260" height="210" rx="28"/>
+    <rect x="470" y="250" width="260" height="210" rx="28"/>
+    <rect x="830" y="250" width="260" height="210" rx="28"/>
+    <path d="M370 355h100m260 0h100"/>
+  </g>
+  <g fill="#1d1d1f" font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="240" y="335" font-size="30" font-weight="700">PURCHASE PROOF</text>
+    <text x="240" y="385" font-size="24">구매 증빙</text>
+    <text x="600" y="335" font-size="30" font-weight="700">GREEN POINTS</text>
+    <text x="600" y="385" font-size="24">행동과 포인트</text>
+    <text x="960" y="335" font-size="30" font-weight="700">ESG RECORD</text>
+    <text x="960" y="385" font-size="24">조직 기록</text>
+    <text x="600" y="610" font-size="24" fill="#6e6e73">PROTOTYPE · NOT VERIFIED CARBON ACCOUNTING</text>
+  </g>
+</svg>

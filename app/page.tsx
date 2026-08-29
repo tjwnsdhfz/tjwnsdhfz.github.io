@@ -35,7 +35,7 @@ export default function Home() {
           __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
         }}
       />
-      <PortfolioSite initialContent={content} canEdit={false} />
+      <PortfolioSite content={content} />
     </>
   );
 }

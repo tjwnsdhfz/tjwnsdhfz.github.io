@@ -1,19 +1,8 @@
-import type { Metadata } from "next";
 import { PUBLISHED_PORTFOLIO_CONTENT } from "../../lib/published-portfolio-content";
-import PortfolioSite from "../portfolio-site";
+import PortfolioEditor from "./portfolio-editor";
 
-export const metadata: Metadata = {
-  title: "포트폴리오 편집 | 김서준",
-  description: "김서준 포트폴리오의 콘텐츠를 편집하고 외부 호스팅에 게시합니다.",
-  robots: { index: false, follow: false },
-};
+export const metadata = { title: "포트폴리오 직접 수정", robots: { index: false, follow: false } };
 
 export default function EditPage() {
-  return (
-    <PortfolioSite
-      initialContent={PUBLISHED_PORTFOLIO_CONTENT}
-      canEdit
-      initialEditorOpen
-    />
-  );
+  return <PortfolioEditor initialContent={PUBLISHED_PORTFOLIO_CONTENT} />;
 }

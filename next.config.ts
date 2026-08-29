@@ -7,6 +7,8 @@ const basePath = configuredBasePath && configuredBasePath !== "/"
   : "";
 
 const nextConfig: NextConfig = {
+  agentRules: false,
+  turbopack: { root: process.cwd() },
   output: staticExport ? "export" : undefined,
   trailingSlash: staticExport,
   basePath,

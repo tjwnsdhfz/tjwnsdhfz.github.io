@@ -1,64 +1,30 @@
-# Kim Seojun · Engineering, Design & Digital Portfolio
+# Kim Seojun · Architecture × AI Automation Portfolio
 
-건축 설계와 현장 운영, CAD·데이터 검증, 디지털 프로젝트에서 문제를 정의하고 결과를 검증해 온 김서준의 포트폴리오입니다. 수행 범위와 한계를 구분하고 공개 코드와 검토 기록으로 근거를 보여줍니다.
+기존 `https://tjwnsdhfz.github.io/`를 위한 공개 전용 저장소입니다. `NEW` 작업 루트나 비공개 지원서·경력 자료를 연결하지 않습니다.
 
-## Content
+## 정보 구조
 
-- 설계·데이터·협업 역량과 실제 근거를 연결한 30초 요약
-- 공개 `DatumGuard v0.3.0`의 독립 CAD 재검증·revision·승인 gate
-- 현장 실측 기반 100개 이상 평면 설계와 공병 안전·협업 경험
-- G4 감사 실패를 숨기지 않고 보강 중인 `BARAM 2026` 검증 절차
-- 건축 설계의 구획·동선·반복 유닛 검토와 명확한 경험 경계
+`Profile → Education → Career → Activities → Credentials → Projects → View`
 
-지원처별 편집 순서와 저장 방식은 [`docs/CONTENT_EDITING.md`](docs/CONTENT_EDITING.md)에 정리되어 있습니다.
+프로젝트는 모두 `문제 / 내가 한 일 / 산출물 / 확인 가능한 증거 / 한계 / 링크`로 표시하며, 사용자 승인 전에는 모두 `featured: false`입니다.
 
-## 사이트에서 직접 편집
+## 콘텐츠 흐름
 
-공개 주소 `https://tjwnsdhfz.github.io/edit/`에서 포트폴리오 내용을 수정할 수 있습니다. `범용 자기소개 적용`으로 소개·핵심 역량 문구만 초기화하면서 프로젝트와 경력 근거는 유지할 수 있습니다. 브라우저 초안 저장과 지원처별 JSON 백업을 지원하며, `tjwnsdhfz/tjwnsdhfz.github.io` 저장소에만 쓰기 권한이 있는 fine-grained token을 현재 세션에서 입력해 콘텐츠를 게시할 수 있습니다. 토큰은 저장되지 않습니다.
-
-자세한 설정은 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)를 참고하세요.
-
-## Local development
-
-Node.js 22.13 이상이 필요합니다.
+1. 일상 아이디어는 비공개 Notion `아이디어 인박스`에 기록합니다.
+2. 요청이 있을 때만 Obsidian `raw/captures`에 불변 스냅샷을 만들고 정본 변경안을 검토합니다.
+3. 승인된 `canonical_id`만 `content/publication-manifest.json`에 표시합니다.
+4. 로컬에서 공개 JSON을 생성하고 개인정보·미승인 주장 검사를 통과시킵니다.
+5. 공개 문장과 프로젝트별 직접 기여를 사용자가 확인한 뒤에만 `main`에 반영합니다.
 
 ```bash
-npm install
-npm run dev:portable
-```
-
-호스팅 중립형 미리보기와 정적 빌드:
-
-```bash
-npm run dev:portable
-npm run build:portable
-```
-
-## Validation
-
-```bash
+npm ci
+npm run content:export:draft
 npm run lint
 npm test
 ```
 
-`npm test`는 정적 빌드, 실제 렌더링 확인, 공개 JSON 무결성, 프리셋 재정렬 회귀를 함께 검사합니다. GitHub Pages도 같은 검증을 통과한 뒤에만 배포합니다.
-
-## Main files
-
-- `app/page.tsx`: 공개 포트폴리오 진입점
-- `app/edit/page.tsx`: 사이트 내 편집 화면
-- `app/content-editor.tsx`: 초안, JSON, GitHub 게시 편집기
-- `public/portfolio-content.json`: 화면·검색·공유 메타데이터가 함께 읽는 공개 콘텐츠 단일 소스
-- `scripts/export-default-content.ts`: 기본 콘텐츠를 공개 JSON에 초기 반영하는 수동 동기화 도구
-- `app/globals.css`: 반응형 디자인 시스템
-- `app/layout.tsx`: 메타데이터, 공유 카드, 폰트
-- `public/projects/`: 실제 프로젝트 이미지
-- `design-system/kim-seojun-portfolio/MASTER.md`: UI 원칙
-
-## External hosting
-
-`npm run build:portable`은 `out/` 정적 배포물을 만듭니다. Vercel, Netlify, Cloudflare Pages, GitHub Pages용 설정이 저장소에 포함되어 있습니다.
+승인이 끝난 후에만 manifest의 해당 값을 `true`로 바꾸고 `npm run content:export`를 실행합니다. `/edit`에서는 문장과 사진을 직접 수정하고 브라우저 임시저장·미리보기·JSON 내보내기를 할 수 있습니다. 토큰 입력이나 GitHub 자동 게시 기능은 없습니다.
 
 ## Privacy
 
-공개 페이지에는 전체 주소, 생년월일, 전화번호, 지원자 번호, 자격증·어학 식별번호를 넣지 않습니다. 연락처는 포트폴리오용 이메일 하나만 사용합니다.
+공개 JSON에는 로컬 경로, 지원서 파일명, 전화번호, 주소, 학번, 식별번호와 미승인 수치를 넣지 않습니다. 연락처는 `thatsceo@naver.com`과 GitHub만 사용합니다.

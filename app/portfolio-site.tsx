@@ -52,7 +52,7 @@ export default function PortfolioSite({ content }: { content: PortfolioContent }
         <div className="profile-index">
           <p>{content.hero.title}<br /><strong>{content.hero.highlight}</strong></p>
           <ol><li>Architecture student</li><li>CAD/BIM workflow builder</li><li>AI & data product maker</li></ol>
-          <div className="profile-links"><ExternalLink href={content.identity.github}>GitHub</ExternalLink><ExternalLink href={`mailto:${content.identity.email}`}>Email</ExternalLink><ExternalLink href={`${basePath}/edit/`}>Edit content</ExternalLink></div>
+          <div className="profile-links"><ExternalLink href={content.identity.github}>GitHub</ExternalLink><ExternalLink href={`mailto:${content.identity.email}`}>Email</ExternalLink><a href="#projects">프로젝트 살펴보기 ↓</a></div>
         </div>
         <p className="profile-statement">{content.about.description}</p>
       </section>
@@ -85,14 +85,14 @@ export default function PortfolioSite({ content }: { content: PortfolioContent }
             <DisclosureMark />
           </summary>
           <div className="project-expanded">
-            <dl><div><dt>MY ROLE</dt><dd>{project.myRole}</dd></div><div><dt>OUTPUT</dt><dd>{project.artifact}</dd></div><div><dt>BOUNDARY</dt><dd>{project.boundary}</dd></div></dl>
+            <dl><div><dt>문제</dt><dd>{project.problem}</dd></div><div><dt>직접 기여</dt><dd>{project.myRole}</dd></div><div><dt>산출물</dt><dd>{project.artifact}</dd></div><div><dt>검증 근거</dt><dd>{project.proof}</dd></div><div><dt>한계</dt><dd>{project.boundary}</dd></div></dl>
             <div className="project-meta"><EvidenceTag item={project} />{project.links.map((link) => <ExternalLink href={link.href} key={link.href}>{link.label}</ExternalLink>)}</div>
           </div>
         </details>)}</div>
       </section>
 
       <section className="view-section" id="view" aria-labelledby="view-title">
-        <div className="view-heading"><h2 id="view-title">VIEW</h2><p>사진은 파일명만 유지해 교체할 수 있습니다.</p></div>
+        <div className="view-heading"><h2 id="view-title">VIEW</h2><p>이미지를 선택하면 해당 프로젝트의 작업 내용과 근거로 이동합니다.</p></div>
         <div className="image-index">{content.projects.filter((p) => p.visibility === "public").map((project) => <a href={`#${project.id}`} key={project.id}><figure><Image src={localPath(project.image)} alt="" fill sizes="(max-width: 760px) 50vw, 25vw" unoptimized /></figure><span>{project.observedAt.slice(0,4)}</span><strong>{project.title}</strong></a>)}</div>
       </section>
     </main>

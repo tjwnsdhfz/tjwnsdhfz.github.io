@@ -264,6 +264,85 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function sanitizePortfolioContent(value: unknown): PortfolioContent {
-  if (!isRecord(value) || value.version !== 2) return DEFAULT_PORTFOLIO_CONTENT;
-  return value as unknown as PortfolioContent;
+  try { return parsePortfolioContent(value); } catch { return DEFAULT_PORTFOLIO_CONTENT; }
+}
+
+/** Public JSON is downloadable; hiding an item in JSX cannot make it private. */
+export function parsePublicPortfolioContent(value: unknown): PortfolioContent {
+  const content = parsePortfolioContent(value);
+  for (const key of ["education", "experiences", "activities", "projects"] as const) {
+    if (content[key].some((item) => item.visibility !== "public")) {
+      throw new Error(`${key}: 비공개 항목은 공개 JSON에서 제거한 뒤 배포해주세요.`);
+    }
+  }
+  return content;
+}
+
+/** Validate every rendered field before an imported draft can reach the UI. */
+export function parsePortfolioContent(value: unknown): PortfolioContent {
+  const fail = (path: string): never => { throw new Error(`${path}: 포트폴리오 데이터 형식을 확인해주세요.`); };
+  const record = (item: unknown, path: string): Record<string, unknown> => isRecord(item) ? item : fail(path);
+  const text = (item: unknown, path: string): string => typeof item === "string" && item.length <= 100_000 ? item : fail(path);
+  const fields = (item: unknown, names: string[], path: string) => {
+    const row = record(item, path);
+    names.forEach((name) => text(row[name], `${path}.${name}`));
+    return row;
+  };
+  const list = (item: unknown, path: string, check: (row: unknown, path: string) => void) => {
+    if (!Array.isArray(item) || item.length > 500) fail(path);
+    (item as unknown[]).forEach((row, i) => check(row, `${path}[${i}]`));
+  };
+  const href = (item: unknown, path: string) => {
+    const url = text(item, path);
+    if (!/^(https?:\/\/[^\s]+|mailto:[^\s]+|\/(?!\/)[^\s]*|#[^\s]*)$/i.test(url) || /[\\\u0000-\u0020]/.test(url)) fail(path);
+  };
+  const picture = (item: unknown, path: string) => {
+    if (typeof item !== "string" || item.length > 7_000_000) fail(path);
+    const url = item as string;
+    if (!/^(\/(?!\/)[^\s]*|https:\/\/[^\s]+|data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+)$/i.test(url) || url.includes("\\")) fail(path);
+  };
+  const evidence = (item: unknown, path: string) => {
+    const row = fields(item, ["observedAt"], path);
+    if (!["public-verified", "prototype", "self-reported", "in-progress"].includes(String(row.evidenceState))) fail(`${path}.evidenceState`);
+    if (!["public", "private"].includes(String(row.visibility))) fail(`${path}.visibility`);
+    list(row.sourceRefs, `${path}.sourceRefs`, (ref, p) => {
+      if (typeof ref !== "string" || !/^(canonical:[^\s]+|https:\/\/[^\s]+)$/.test(ref)) fail(p);
+    });
+  };
+  const root = record(value, "root");
+  if (root.version !== 2) fail("version");
+  const identity = fields(root.identity, ["name", "englishName", "monogram", "role", "status", "email", "github"], "identity");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(identity.email))) fail("identity.email");
+  href(identity.github, "identity.github");
+  const hero = fields(root.hero, ["eyebrow", "title", "highlight", "description", "imageAlt"], "hero");
+  picture(hero.image, "hero.image");
+  const about = fields(root.about, ["eyebrow", "title", "description"], "about");
+  list(about.facts, "about.facts", (row, p) => { fields(row, ["label", "value"], p); });
+  list(root.education, "education", (row, p) => { fields(row, ["period", "institution", "course", "description"], p); evidence(row, p); });
+  for (const key of ["experiences", "activities"]) list(root[key], key, (row, p) => {
+    fields(row, ["period", "role", "organization", "description", "proof"], p); evidence(row, p);
+  });
+  const ids = new Set<string>();
+  const canonicalIds = new Set<string>();
+  list(root.projects, "projects", (item, p) => {
+    const row = fields(item, ["id", "canonicalId", "title", "category", "summary", "problem", "myRole", "artifact", "proof", "boundary", "imageAlt"], p);
+    const id = String(row.id); const canonicalId = String(row.canonicalId);
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(id) || ids.has(id)) fail(`${p}.id`);
+    if (!canonicalId.startsWith("project:") || canonicalIds.has(canonicalId)) fail(`${p}.canonicalId`);
+    ids.add(id); canonicalIds.add(canonicalId);
+    if (typeof row.featured !== "boolean") fail(`${p}.featured`);
+    picture(row.image, `${p}.image`); evidence(row, p);
+    list(row.tags, `${p}.tags`, text);
+    list(row.links, `${p}.links`, (link, path) => { const l = fields(link, ["label"], path); href(l.href, `${path}.href`); });
+  });
+  list(root.awards, "awards", (row, p) => { fields(row, ["title", "description"], p); });
+  list(root.credentials, "credentials", text);
+  list(root.repositories, "repositories", (item, p) => {
+    const row = fields(item, ["name", "description"], p); href(row.repositoryUrl, `${p}.repositoryUrl`);
+    if (row.demoUrl !== undefined && row.demoUrl !== "") href(row.demoUrl, `${p}.demoUrl`);
+    list(row.tags, `${p}.tags`, text);
+  });
+  list(root.capabilities, "capabilities", (row, p) => { fields(row, ["title", "description"], p); });
+  fields(root.contact, ["title", "description", "footerNote"], "contact");
+  return value as PortfolioContent;
 }

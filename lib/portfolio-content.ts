@@ -210,7 +210,7 @@ export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContent = {
       boundary: "팀 프로젝트이며 공개 전 제 직접 기여 문장은 사용자 최종 확인이 필요합니다.",
       image: "/projects/modu-brain-desktop.png", imageAlt: "Modu Brain 맥락 분석 화면",
       tags: ["TypeScript", "OpenAI API", "Supabase", "Testing"],
-      links: [{ label: "Live demo", href: "https://modu-brain-demo.onrender.com/demo" }, { label: "GitHub", href: "https://github.com/tjwnsdhfz/modu-brain" }],
+      links: [{ label: "Live demo", href: "https://modu-brain-tjwnsdhfz.onrender.com/demo" }, { label: "GitHub", href: "https://github.com/tjwnsdhfz/modu-brain" }],
       evidenceState: "public-verified", observedAt: "2026-08-29", sourceRefs: ["canonical:project:modu-brain", "https://github.com/tjwnsdhfz/modu-brain"], visibility: "public", featured: false,
     },
     {
@@ -243,7 +243,7 @@ export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContent = {
   credentials: ["투자자산운용사 · 2024", "굴착기운전기능사 · 2023", "전산응용건축제도기능사 · 2022", "워드프로세서", "OPIc IH · 2026"],
   repositories: [
     { name: "DatumGuard", description: "설계 파일 독립 검증과 변경관리", repositoryUrl: "https://github.com/tjwnsdhfz/datumguard", demoUrl: "https://datumguard-tjwnsdhfz.vercel.app", tags: ["Python", "TypeScript", "CAD/BIM"] },
-    { name: "Modu Brain", description: "근거 중심 협업 맥락 분석", repositoryUrl: "https://github.com/tjwnsdhfz/modu-brain", demoUrl: "https://modu-brain-demo.onrender.com/demo", tags: ["TypeScript", "AI", "Supabase"] },
+    { name: "Modu Brain", description: "근거 중심 협업 맥락 분석", repositoryUrl: "https://github.com/tjwnsdhfz/modu-brain", demoUrl: "https://modu-brain-tjwnsdhfz.onrender.com/demo", tags: ["TypeScript", "AI", "Supabase"] },
     { name: "GreenMiles", description: "친환경 구매와 ESG 기록 MVP", repositoryUrl: "https://github.com/tjwnsdhfz/greenmiles-mvp", tags: ["Next.js", "Supabase"] },
   ],
   capabilities: [

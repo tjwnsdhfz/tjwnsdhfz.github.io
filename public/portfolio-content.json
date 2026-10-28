@@ -272,7 +272,7 @@
       "links": [
         {
           "label": "Live demo",
-          "href": "https://modu-brain-demo.onrender.com/demo"
+          "href": "https://modu-brain-tjwnsdhfz.onrender.com/demo"
         },
         {
           "label": "GitHub",
@@ -375,7 +375,7 @@
       "name": "Modu Brain",
       "description": "근거 중심 협업 맥락 분석",
       "repositoryUrl": "https://github.com/tjwnsdhfz/modu-brain",
-      "demoUrl": "https://modu-brain-demo.onrender.com/demo",
+      "demoUrl": "https://modu-brain-tjwnsdhfz.onrender.com/demo",
       "tags": [
         "TypeScript",
         "AI",
